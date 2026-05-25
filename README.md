@@ -4,6 +4,14 @@ VoidReach is a desktop CRM, calendar, and task management application built with
 
 ---
 
+## Screenshots
+
+| macOS | Windows |
+|-------|---------|
+| ![VoidReach on macOS](sample/voidreachmac.png) | ![VoidReach on Windows](sample/voidreachwindows.png) |
+
+---
+
 ## Features
 
 ### Contact Management
