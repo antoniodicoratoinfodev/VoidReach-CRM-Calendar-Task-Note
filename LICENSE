@@ -1,0 +1,70 @@
+Copyright (c) 2025. All rights reserved.
+
+SOURCE-AVAILABLE / NON-COMMERCIAL PORTFOLIO LICENSE
+
+VoidReach and its source code (the "Software") are made available on GitHub
+solely for informational, educational, and portfolio demonstration purposes.
+
+-------------------------------------------------------------------------------
+
+1. PERMITTED USES
+
+   You are permitted to:
+
+   a) View and read the source code for personal learning or evaluation purposes.
+   b) Assess the quality, architecture, and design of the Software for the purpose
+      of evaluating the author's work and technical skills.
+   c) Fork or download the repository exclusively for the purposes described above.
+
+-------------------------------------------------------------------------------
+
+2. PROHIBITED USES
+
+   You are NOT permitted to:
+
+   a) Run, execute, deploy, or use the Software — in whole or in part — for any
+      commercial, professional, or business purpose of any kind.
+   b) Use the Software, or any portion of it, in a production environment,
+      internal tooling, or any system that supports a commercial operation.
+   c) Redistribute, sublicense, sell, rent, lease, or transfer the Software or
+      any derivative works based on it.
+   d) Incorporate any part of the Software into another product or project
+      without the author's explicit written permission.
+
+-------------------------------------------------------------------------------
+
+3. COMMERCIAL LICENSING & CUSTOM VERSIONS
+
+   VoidReach is intended as a general demonstration of the author's capabilities
+   and is actively under development — new features and modules will be added
+   over time.
+
+   The Software may be further developed, customized, and licensed to businesses
+   or individuals under a separate commercial agreement. Clients interested in
+   adopting VoidReach for professional use are encouraged to request a tailored
+   version, adapted to their specific needs and workflows, rather than using
+   this general public build.
+
+   Note: if a commercial agreement is reached, this repository may be set to
+   private or the source code may be removed. In such cases, only the
+   agreed-upon custom version will be delivered to the client, and this
+   general public version will either remain available as-is or be taken down
+   at the author's discretion.
+
+-------------------------------------------------------------------------------
+
+4. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING
+   FROM THE USE OR INABILITY TO USE THE SOFTWARE.
+
+-------------------------------------------------------------------------------
+
+5. GOVERNING PRINCIPLE
+
+   The presence of this code on a public repository does not constitute a
+   grant of any rights beyond those explicitly stated above. All rights not
+   expressly granted herein are reserved by the author.

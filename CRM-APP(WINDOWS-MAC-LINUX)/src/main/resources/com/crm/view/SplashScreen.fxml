@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Rectangle?>
+
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="com.crm.controller.SplashScreenController"
+           prefWidth="450" prefHeight="300" styleClass="splash-container">
+    
+    <!-- Background con gradiente e bordi arrotondati (gestito via CSS) -->
+    <VBox alignment="CENTER" spacing="25" styleClass="splash-content">
+        <padding>
+            <Insets top="40" right="40" bottom="40" left="40"/>
+        </padding>
+
+        <StackPane>
+            <!-- Effetto glow dietro il logo -->
+            <Rectangle fx:id="logoGlow" width="100" height="100" arcWidth="50" arcHeight="50" 
+                       fill="#3b82f6" opacity="0.15" style="-fx-effect: dropshadow(three-pass-box, #3b82f6, 40, 0, 0, 0);"/>
+            <ImageView fx:id="logoView" fitHeight="90" fitWidth="90" pickOnBounds="true" preserveRatio="true">
+                <Image url="@/images/app-icon.png"/>
+            </ImageView>
+        </StackPane>
+
+        <VBox alignment="CENTER" spacing="5">
+            <Label text="VOIDREACH" styleClass="splash-brand"/>
+            <Label text="CUSTOMER RELATIONSHIP MANAGEMENT" styleClass="splash-subtitle"/>
+        </VBox>
+
+        <VBox spacing="10" alignment="CENTER" fillWidth="false">
+            <HBox alignment="CENTER_LEFT" prefWidth="320">
+                <Label fx:id="statusLabel" text="Inizializzazione sistema..." styleClass="splash-status"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="percentLabel" text="0%" styleClass="splash-percent"/>
+            </HBox>
+            
+            <StackPane alignment="CENTER_LEFT">
+                <!-- Background della barra -->
+                <Rectangle width="320" height="6" arcWidth="6" arcHeight="6" fill="#1e293b"/>
+                <!-- Barra di progresso effettiva -->
+                <Rectangle fx:id="progressFill" width="0" height="6" arcWidth="6" arcHeight="6" fill="#3b82f6"/>
+            </StackPane>
+        </VBox>
+
+        <Label text="v1.2.0 | © 2026 VoidReach Inc." styleClass="splash-footer"/>
+    </VBox>
+</StackPane>
