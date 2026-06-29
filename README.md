@@ -87,29 +87,30 @@ The project can also be opened and run directly from IntelliJ IDEA.
 
 ```
 CRM-APP(WINDOWS-MAC-LINUX)/
-├── src/
-│   └── main/
-│       ├── java/
-│       │   └── com/
-│       │       └── crm/
-│       │           ├── app/
-│       │           │   ├── AppLauncher.java    # Launcher wrapper
-│       │           │   └── Main.java           # JavaFX entry point
-│       │           ├── controller/
-│       │           │   ├── MainController.java # All UI logic
-│       │           │   └── SplashScreenController.java
-│       │           └── model/
-│       │               └── Contact.java        # Contact data model
-│       └── resources/
-│           └── com/
-│               └── crm/
-│                   ├── css/
-│                   │   ├── style-dark.css      # Dark theme
-│                   │   └── style.css           # Light theme
-│                   └── images/
-│                       └── app-icon.png        # Application icon
 ├── pom.xml
-└── run.sh
+├── run.sh
+└── src/
+    └── main/
+        ├── java/
+        │   └── com/
+        │       ├── app/
+        │       │   ├── AppLauncher.java    # Launcher wrapper
+        │       │   └── Main.java           # JavaFX entry point
+        │       ├── controller/
+        │       │   ├── MainController.java # All UI logic
+        │       │   └── SplashScreen.java   # Splash screen controller
+        │       └── model/
+        │           └── Contact.java        # Contact data model
+        └── resources/
+            └── com/
+                ├── view/
+                │   ├── MainView.fxml       # Main UI layout
+                │   └── SplashScreen.fxml   # Splash screen layout
+                ├── css/
+                │   ├── style-dark.css      # Dark theme
+                │   └── style.css           # Light theme
+                └── images/
+                    └── app-icon.png        # Application icon
 ```
 
 ---
