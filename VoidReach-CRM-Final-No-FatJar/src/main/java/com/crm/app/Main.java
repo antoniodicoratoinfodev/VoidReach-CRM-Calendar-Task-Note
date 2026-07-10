@@ -1,6 +1,15 @@
 package com.crm.app;
 
+import java.awt.Taskbar;
+import java.awt.Toolkit;
+import java.util.concurrent.CompletableFuture;
+
 import com.crm.controller.SplashScreenController;
+
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -11,16 +20,7 @@ import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.animation.FadeTransition;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.util.Duration;
-
-import java.awt.Taskbar;
-import java.awt.Toolkit;
-import java.util.concurrent.CompletableFuture;
 
 public class Main extends Application {
 
