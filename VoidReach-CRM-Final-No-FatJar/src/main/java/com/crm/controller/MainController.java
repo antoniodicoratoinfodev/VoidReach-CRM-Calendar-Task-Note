@@ -297,13 +297,7 @@ public class MainController {
         
         calendarDatePicker.valueProperty().addListener((obs, old, newValue) -> {
             if (newValue != null) {
-                currentMiniMonth = YearMonth.from(newValue);
-                if (currentViewMode.equals("Week")) {
-                    weekStartDate = getWeekStart(newValue);
-                }
-                setupMainCalendar();
-                updateRightSidebar();
-                saveCurrentData();
+                refreshCalendarForSelectedDate(newValue);
             }
         });
 
@@ -798,27 +792,33 @@ public class MainController {
 
     @FXML private void handleMiniPrevMonth() { currentMiniMonth = currentMiniMonth.minusMonths(1); updateRightSidebar(); }
     @FXML private void handleMiniNextMonth() { currentMiniMonth = currentMiniMonth.plusMonths(1); updateRightSidebar(); }
-    @FXML private void handleToday() { 
-        LocalDate today = LocalDate.now();
-        calendarDatePicker.setValue(today); 
-        weekStartDate = getWeekStart(today);
-        currentMiniMonth = YearMonth.from(today); 
+    @FXML private void handleToday() { selectCalendarDate(LocalDate.now()); }
+    
+    @FXML private void handlePrevDay() {
+        LocalDate targetDate = currentViewMode.equals("Day")
+                ? calendarDatePicker.getValue().minusDays(1)
+                : weekStartDate.minusWeeks(1);
+        selectCalendarDate(targetDate);
+    }
+    
+    @FXML private void handleNextDay() {
+        LocalDate targetDate = currentViewMode.equals("Day")
+                ? calendarDatePicker.getValue().plusDays(1)
+                : weekStartDate.plusWeeks(1);
+        selectCalendarDate(targetDate);
+    }
+
+    private void selectCalendarDate(LocalDate date) {
+        if (date.equals(calendarDatePicker.getValue())) refreshCalendarForSelectedDate(date);
+        else calendarDatePicker.setValue(date);
+    }
+
+    private void refreshCalendarForSelectedDate(LocalDate date) {
+        currentMiniMonth = YearMonth.from(date);
+        if (currentViewMode.equals("Week")) weekStartDate = getWeekStart(date);
         setupMainCalendar();
-        updateRightSidebar(); 
-    }
-    
-    @FXML private void handlePrevDay() { 
-        if (currentViewMode.equals("Day")) calendarDatePicker.setValue(calendarDatePicker.getValue().minusDays(1));
-        else { weekStartDate = weekStartDate.minusWeeks(1); calendarDatePicker.setValue(weekStartDate); }
-        currentMiniMonth = YearMonth.from(calendarDatePicker.getValue());
-        setupMainCalendar(); updateRightSidebar();
-    }
-    
-    @FXML private void handleNextDay() { 
-        if (currentViewMode.equals("Day")) calendarDatePicker.setValue(calendarDatePicker.getValue().plusDays(1));
-        else { weekStartDate = weekStartDate.plusWeeks(1); calendarDatePicker.setValue(weekStartDate); }
-        currentMiniMonth = YearMonth.from(calendarDatePicker.getValue());
-        setupMainCalendar(); updateRightSidebar();
+        updateRightSidebar();
+        saveCurrentData();
     }
 
     private void showTaskEditDialog(Task existingTask, int startMin, int duration, String desc) {
