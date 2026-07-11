@@ -52,7 +52,6 @@ VoidReach is a desktop CRM application developed with Java 21 and JavaFX. It cur
 
 The **Home**, **Dashboard**, **Leads**, **Opportunities**, **Accounts**, **Tasks**, and **Settings** items are navigable but currently display a placeholder. **Tasks** is not a standalone section: task management is integrated into the **Calendar**.
 
-The application does not currently include Google Calendar synchronization, a remote database, email delivery, or online multi-user management.
 
 ## Local Persistence and Security
 
