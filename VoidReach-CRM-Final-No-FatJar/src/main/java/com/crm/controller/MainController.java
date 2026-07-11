@@ -7,9 +7,17 @@ import com.crm.model.CrmDataSnapshot;
 import com.crm.repository.LocalUserRepository;
 import com.crm.repository.CrmDataRepository;
 import com.crm.repository.LocalCrmDataRepository;
+import com.crm.service.AvatarImageProcessor;
+import com.crm.service.AvatarImageProcessor.CropRegion;
+import com.crm.service.AvatarImageProcessor.CropSelection;
+import com.crm.service.AvatarImageProcessor.Source;
 import com.crm.service.AvatarService;
 import com.crm.service.AuthService;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Side;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,19 +31,21 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,10 +53,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 public class MainController {
-
-    private static final long MAX_AVATAR_SIZE_BYTES = 20L * 1024 * 1024;
 
     @FXML private TableView<Contact> contactsTable;
     @FXML private TableColumn<Contact, String> nameColumn;
@@ -119,6 +129,9 @@ public class MainController {
     private final AuthService authService = new AuthService(new LocalUserRepository());
     private final AvatarService avatarService = new AvatarService(new LocalUserRepository());
     private final CrmDataRepository crmDataRepository = new LocalCrmDataRepository();
+    private final ChangeListener<Number> avatarScaleListener = (observable, oldValue, newValue) -> refreshAvatar();
+    private final WeakChangeListener<Number> weakAvatarScaleListener = new WeakChangeListener<>(avatarScaleListener);
+    private Window avatarScaleWindow;
     private boolean loadingUserData;
     private boolean contactSelectionMode;
     private final Set<Contact> checkedContacts = new HashSet<>();
@@ -128,6 +141,10 @@ public class MainController {
         this.logoutAction = logoutAction;
         if (currentUserLabel != null) currentUserLabel.setText(user.getFullName());
         refreshAvatar();
+        Platform.runLater(() -> {
+            installAvatarScaleTracking();
+            refreshAvatar();
+        });
         loadUserData();
     }
 
@@ -160,79 +177,240 @@ public class MainController {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Immagini PNG e JPG", "*.png", "*.jpg", "*.jpeg"));
         java.io.File selected = chooser.showOpenDialog(accountMenuButton.getScene().getWindow());
         if (selected == null) return;
-        if (selected.length() > MAX_AVATAR_SIZE_BYTES) {
-            showError("Image too large", "Profile image must not exceed 20 MB.");
+
+        Path selectedPath = selected.toPath();
+        try {
+            long fileSize = Files.size(selectedPath);
+            if (fileSize > AvatarImageProcessor.MAX_UPLOAD_BYTES) {
+                showError("Immagine troppo grande", "La foto profilo non può superare 10 MB.");
+                return;
+            }
+        } catch (IOException ex) {
+            showError("Immagine non valida", "Non è stato possibile leggere il file selezionato.");
             return;
         }
-        Image image = new Image(selected.toURI().toString());
-        if (image.isError()) { showError("Immagine non valida", "Non è stato possibile aprire l'immagine selezionata."); return; }
-        showAvatarCropDialog(image);
+
+        runAvatarTask(
+                "Preparazione dell'immagine...",
+                "Immagine non valida",
+                () -> avatarService.prepareSource(selectedPath),
+                this::showAvatarCropDialog);
     }
 
-    private void showAvatarCropDialog(Image image) {
+    private void showAvatarCropDialog(Source source) {
         final double previewSize = 380;
         final double cropSize = 250;
-        final double outputSize = 400;
+        final Image previewImage = SwingFXUtils.toFXImage(source.preview(), null);
         Canvas canvas = new Canvas(previewSize, previewSize);
 
         class CropRenderer {
-            double zoom = 1.0, offsetX, offsetY, dragX, dragY;
-            double baseScale() { return Math.max(cropSize / image.getWidth(), cropSize / image.getHeight()); }
-            void clampOffset() {
-                double width = image.getWidth() * baseScale() * zoom, height = image.getHeight() * baseScale() * zoom;
-                double maxX = Math.max(0, (width - cropSize) / 2), maxY = Math.max(0, (height - cropSize) / 2);
-                offsetX = Math.max(-maxX, Math.min(maxX, offsetX));
-                offsetY = Math.max(-maxY, Math.min(maxY, offsetY));
+            double centerX = source.width() / 2.0;
+            double centerY = source.height() / 2.0;
+            double zoom = 1.0;
+            double dragX;
+            double dragY;
+
+            CropSelection selection() {
+                return new CropSelection(centerX, centerY, zoom);
             }
-            void drawCrop(GraphicsContext gc, double size, double diameter) {
-                double scale = Math.max(diameter / image.getWidth(), diameter / image.getHeight()) * zoom;
-                double x = (size - image.getWidth() * scale) / 2 + offsetX * (diameter / cropSize);
-                double y = (size - image.getHeight() * scale) / 2 + offsetY * (diameter / cropSize);
-                gc.drawImage(image, x, y, image.getWidth() * scale, image.getHeight() * scale);
+
+            void clampSelection() {
+                CropSelection clamped = AvatarImageProcessor.clampSelection(
+                        source.width(), source.height(), selection());
+                centerX = clamped.centerX();
+                centerY = clamped.centerY();
             }
+
+            void pan(double deltaX, double deltaY) {
+                double sourceSide = Math.min(source.width(), source.height()) / zoom;
+                centerX -= deltaX * sourceSide / cropSize;
+                centerY -= deltaY * sourceSide / cropSize;
+                clampSelection();
+            }
+
             void draw() {
-                GraphicsContext gc = canvas.getGraphicsContext2D(); gc.clearRect(0, 0, previewSize, previewSize);
-                gc.setFill(Color.web("#0f172a")); gc.fillRect(0, 0, previewSize, previewSize);
-                double backgroundScale = Math.min(previewSize / image.getWidth(), previewSize / image.getHeight());
-                double bgW = image.getWidth() * backgroundScale, bgH = image.getHeight() * backgroundScale;
-                gc.setGlobalAlpha(0.24); gc.drawImage(image, (previewSize - bgW) / 2, (previewSize - bgH) / 2, bgW, bgH); gc.setGlobalAlpha(1);
-                gc.setFill(Color.rgb(15, 23, 42, 0.55)); gc.fillRect(0, 0, previewSize, previewSize);
-                gc.save(); gc.beginPath(); gc.arc(previewSize / 2, previewSize / 2, cropSize / 2, cropSize / 2, 0, 360); gc.closePath(); gc.clip();
-                drawCrop(gc, previewSize, cropSize); gc.restore();
-                gc.setStroke(Color.web("#60a5fa")); gc.setLineWidth(3); gc.strokeOval((previewSize - cropSize) / 2, (previewSize - cropSize) / 2, cropSize, cropSize);
-            }
-            WritableImage createResult() {
-                Canvas result = new Canvas(outputSize, outputSize); GraphicsContext gc = result.getGraphicsContext2D();
-                gc.save(); gc.beginPath(); gc.arc(outputSize / 2, outputSize / 2, outputSize / 2, outputSize / 2, 0, 360); gc.closePath(); gc.clip();
-                drawCrop(gc, outputSize, outputSize); gc.restore();
-                return result.snapshot(null, null);
+                GraphicsContext graphics = canvas.getGraphicsContext2D();
+                graphics.setImageSmoothing(true);
+                graphics.clearRect(0, 0, previewSize, previewSize);
+                graphics.setFill(Color.web("#0f172a"));
+                graphics.fillRect(0, 0, previewSize, previewSize);
+
+                double backgroundScale = Math.min(
+                        previewSize / previewImage.getWidth(),
+                        previewSize / previewImage.getHeight());
+                double backgroundWidth = previewImage.getWidth() * backgroundScale;
+                double backgroundHeight = previewImage.getHeight() * backgroundScale;
+                graphics.setGlobalAlpha(0.24);
+                graphics.drawImage(previewImage,
+                        (previewSize - backgroundWidth) / 2,
+                        (previewSize - backgroundHeight) / 2,
+                        backgroundWidth, backgroundHeight);
+                graphics.setGlobalAlpha(1);
+                graphics.setFill(Color.rgb(15, 23, 42, 0.55));
+                graphics.fillRect(0, 0, previewSize, previewSize);
+
+                CropRegion region = AvatarImageProcessor.resolveCropRegion(
+                        source.width(), source.height(), selection());
+                double scaleX = previewImage.getWidth() / source.width();
+                double scaleY = previewImage.getHeight() / source.height();
+                double sourceX = region.x() * scaleX;
+                double sourceY = region.y() * scaleY;
+                double sourceWidth = Math.min(region.size() * scaleX,
+                        previewImage.getWidth() - sourceX);
+                double sourceHeight = Math.min(region.size() * scaleY,
+                        previewImage.getHeight() - sourceY);
+                double cropX = (previewSize - cropSize) / 2;
+                double cropY = (previewSize - cropSize) / 2;
+
+                graphics.save();
+                graphics.beginPath();
+                graphics.arc(previewSize / 2, previewSize / 2,
+                        cropSize / 2, cropSize / 2, 0, 360);
+                graphics.closePath();
+                graphics.clip();
+                graphics.drawImage(previewImage,
+                        sourceX, sourceY, sourceWidth, sourceHeight,
+                        cropX, cropY, cropSize, cropSize);
+                graphics.restore();
+                graphics.setStroke(Color.web("#60a5fa"));
+                graphics.setLineWidth(3);
+                graphics.strokeOval(cropX, cropY, cropSize, cropSize);
             }
         }
-        CropRenderer renderer = new CropRenderer(); renderer.draw();
-        canvas.setOnMousePressed(event -> { renderer.dragX = event.getX(); renderer.dragY = event.getY(); });
-        canvas.setOnMouseDragged(event -> { renderer.offsetX += event.getX() - renderer.dragX; renderer.offsetY += event.getY() - renderer.dragY; renderer.dragX = event.getX(); renderer.dragY = event.getY(); renderer.clampOffset(); renderer.draw(); });
-        Slider zoom = new Slider(1, 3, 1); zoom.setShowTickLabels(true); zoom.setMajorTickUnit(1); zoom.valueProperty().addListener((obs, old, value) -> { renderer.zoom = value.doubleValue(); renderer.clampOffset(); renderer.draw(); });
+        CropRenderer renderer = new CropRenderer();
+        renderer.draw();
+        canvas.setOnMousePressed(event -> {
+            renderer.dragX = event.getX();
+            renderer.dragY = event.getY();
+        });
+        canvas.setOnMouseDragged(event -> {
+            renderer.pan(event.getX() - renderer.dragX, event.getY() - renderer.dragY);
+            renderer.dragX = event.getX();
+            renderer.dragY = event.getY();
+            renderer.draw();
+        });
 
-        Dialog<ButtonType> dialog = new Dialog<>(); dialog.setTitle("Ritaglia immagine profilo"); applyThemeToDialog(dialog);
-        ButtonType save = new ButtonType("Usa questa immagine", ButtonBar.ButtonData.OK_DONE); dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
-        Label help = new Label("Trascina l'immagine per scegliere l'inquadratura. Usa il cursore per ingrandirla."); help.setWrapText(true); help.getStyleClass().add("auth-subtitle");
-        VBox content = new VBox(14, help, canvas, new Label("Zoom"), zoom); content.setAlignment(javafx.geometry.Pos.CENTER); content.setPrefWidth(previewSize); dialog.getDialogPane().setContent(content);
+        Slider zoom = new Slider(1,
+                AvatarImageProcessor.maxZoomFor(source.width(), source.height()), 1);
+        zoom.setShowTickLabels(true);
+        zoom.setMajorTickUnit(1);
+        zoom.setBlockIncrement(0.1);
+        zoom.valueProperty().addListener((observable, oldValue, newValue) -> {
+            renderer.zoom = newValue.doubleValue();
+            renderer.clampSelection();
+            renderer.draw();
+        });
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Ritaglia immagine profilo");
+        applyThemeToDialog(dialog);
+        ButtonType save = new ButtonType("Usa questa immagine", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
+        Label help = new Label("Trascina l'immagine per scegliere l'inquadratura. Usa il cursore per ingrandirla.");
+        help.setWrapText(true);
+        help.getStyleClass().add("auth-subtitle");
+        VBox content = new VBox(14, help, canvas, new Label("Zoom"), zoom);
+        content.setAlignment(javafx.geometry.Pos.CENTER);
+        content.setPrefWidth(previewSize);
+        dialog.getDialogPane().setContent(content);
         if (dialog.showAndWait().filter(result -> result == save).isPresent()) {
-            try { avatarService.updateAvatar(currentUser, renderer.createResult()); refreshAvatar(); }
-            catch (IllegalStateException ex) { showError("Immagine non aggiornata", ex.getMessage()); }
+            CropSelection crop = renderer.selection();
+            runAvatarTask(
+                    "Ottimizzazione dell'avatar...",
+                    "Immagine non aggiornata",
+                    () -> {
+                        avatarService.updateAvatar(currentUser, source, crop);
+                        return null;
+                    },
+                    ignored -> refreshAvatar());
         }
     }
 
     private void refreshAvatar() {
         if (currentUser == null || avatarImage == null) return;
-        java.nio.file.Path path = avatarService.getAvatarPath(currentUser);
-        boolean available = path != null && java.nio.file.Files.isRegularFile(path);
-        if (available) {
-            avatarImage.setImage(new Image(path.toUri().toString(), 44, 44, true, true));
-            avatarImage.setClip(new Circle(22, 22, 22));
-        }
+        Image image = avatarService.loadAvatar(currentUser, navbarAvatarPixelSize());
+        boolean available = image != null && !image.isError()
+                && image.getWidth() > 0 && image.getHeight() > 0;
+        if (available) avatarImage.setImage(image);
         avatarImage.setVisible(available);
+        avatarImage.setManaged(available);
         defaultAvatarIcon.setVisible(!available);
+        defaultAvatarIcon.setManaged(!available);
+    }
+
+    private int navbarAvatarPixelSize() {
+        double outputScale = 1.0;
+        if (avatarImage.getScene() != null && avatarImage.getScene().getWindow() != null) {
+            Window window = avatarImage.getScene().getWindow();
+            outputScale = Math.max(window.getOutputScaleX(), window.getOutputScaleY());
+        }
+        double logicalSize = Math.max(avatarImage.getFitWidth(), avatarImage.getFitHeight());
+        return Math.max(1, (int) Math.ceil(logicalSize * outputScale));
+    }
+
+    private void installAvatarScaleTracking() {
+        Window window = avatarImage.getScene() == null ? null : avatarImage.getScene().getWindow();
+        if (window == null || window == avatarScaleWindow) return;
+        if (avatarScaleWindow != null) {
+            avatarScaleWindow.outputScaleXProperty().removeListener(weakAvatarScaleListener);
+            avatarScaleWindow.outputScaleYProperty().removeListener(weakAvatarScaleListener);
+        }
+        avatarScaleWindow = window;
+        window.outputScaleXProperty().addListener(weakAvatarScaleListener);
+        window.outputScaleYProperty().addListener(weakAvatarScaleListener);
+    }
+
+    private <T> void runAvatarTask(
+            String statusText,
+            String errorTitle,
+            Callable<T> operation,
+            Consumer<T> onSuccess) {
+        javafx.concurrent.Task<T> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected T call() throws Exception {
+                return operation.call();
+            }
+        };
+
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setPrefSize(32, 32);
+        Label status = new Label(statusText);
+        HBox progressContent = new HBox(12, progressIndicator, status);
+        progressContent.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        Dialog<Void> progressDialog = new Dialog<>();
+        progressDialog.setTitle("Immagine profilo");
+        applyThemeToDialog(progressDialog);
+        progressDialog.getDialogPane().setContent(progressContent);
+        progressDialog.getDialogPane().setPrefWidth(360);
+        progressDialog.setOnCloseRequest(event -> {
+            if (task.isRunning()) event.consume();
+        });
+
+        task.setOnSucceeded(event -> {
+            progressDialog.close();
+            onSuccess.accept(task.getValue());
+        });
+        task.setOnFailed(event -> {
+            progressDialog.close();
+            showError(errorTitle, avatarFailureMessage(task.getException()));
+        });
+
+        Thread worker = new Thread(task, "avatar-image-worker");
+        worker.setDaemon(true);
+        progressDialog.show();
+        worker.start();
+    }
+
+    private String avatarFailureMessage(Throwable failure) {
+        Throwable current = failure;
+        while (current != null) {
+            if (current.getMessage() != null && !current.getMessage().isBlank()) {
+                return current.getMessage();
+            }
+            current = current.getCause();
+        }
+        return "Non è stato possibile elaborare l'immagine selezionata.";
     }
 
     private void showProfileDialog() {

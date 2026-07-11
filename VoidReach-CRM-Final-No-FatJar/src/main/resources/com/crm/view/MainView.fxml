@@ -69,9 +69,13 @@
                         <graphic>
                             <HBox spacing="8" alignment="CENTER">
                                 <Label fx:id="currentUserLabel" text="Utente" style="-fx-font-weight: 600;"/>
-                                <StackPane prefWidth="44" prefHeight="44">
-                                    <FontIcon fx:id="defaultAvatarIcon" iconLiteral="fas-user-circle" iconSize="44" iconColor="#cbd5e1"/>
-                                    <ImageView fx:id="avatarImage" fitWidth="44" fitHeight="44" preserveRatio="true" visible="false"/>
+                                <StackPane styleClass="avatar-frame">
+                                    <FontIcon fx:id="defaultAvatarIcon" iconLiteral="fas-user-circle" iconSize="56" iconColor="#cbd5e1"/>
+                                    <ImageView fx:id="avatarImage" fitWidth="56" fitHeight="56" preserveRatio="true" smooth="true" cache="false" visible="false">
+                                        <clip>
+                                            <Circle centerX="28" centerY="28" radius="28"/>
+                                        </clip>
+                                    </ImageView>
                                 </StackPane>
                             </HBox>
                         </graphic>
@@ -183,4 +187,3 @@
         </VBox>
     </right>
 </BorderPane>
-

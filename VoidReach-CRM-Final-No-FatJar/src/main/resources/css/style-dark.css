@@ -532,8 +532,18 @@
 .auth-checkbox:selected .mark { -fx-background-color: white; }
 .auth-checkbox:selected .box { -fx-background-color: #2563eb; }
 
-.account-menu-button { -fx-background-color: #1e293b; -fx-padding: 4 8; -fx-cursor: hand; -fx-background-radius: 26; }
+.account-menu-button { -fx-background-color: #1e293b; -fx-padding: 4 8; -fx-cursor: hand; -fx-background-radius: 32; }
 .account-menu-button:hover { -fx-background-color: #334155; }
+
+.avatar-frame {
+    -fx-min-width: 56;
+    -fx-pref-width: 56;
+    -fx-max-width: 56;
+    -fx-min-height: 56;
+    -fx-pref-height: 56;
+    -fx-max-height: 56;
+
+}
 
 /* Multi-contact selection */
 .contact-select-check .box {

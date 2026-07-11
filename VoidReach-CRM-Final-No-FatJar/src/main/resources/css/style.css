@@ -69,11 +69,21 @@
     -fx-background-color: #f1f5f9;
     -fx-padding: 4 8;
     -fx-cursor: hand;
-    -fx-background-radius: 26;
+    -fx-background-radius: 32;
 }
 
 .account-menu-button:hover {
     -fx-background-color: #e2e8f0;
+}
+
+.avatar-frame {
+    -fx-min-width: 56;
+    -fx-pref-width: 56;
+    -fx-max-width: 56;
+    -fx-min-height: 56;
+    -fx-pref-height: 56;
+    -fx-max-height: 56;
+
 }
 
 /* Content */
@@ -379,4 +389,3 @@
     -fx-border-color: #e2e8f0;
     -fx-border-width: 0 1 0 0;
 }
-

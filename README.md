@@ -8,7 +8,7 @@ The app includes registration, login, password recovery, password update, and an
 
 - `users.properties` stores account data;
 - `data/<account-id>.properties` stores that account's contacts, tasks, selected calendar date, view mode, and zoom level;
-- `avatars/<account-id>.png` stores the cropped profile image, when one is set;
+- `avatars/<account-id>-<version>.png` stores the current lossless cropped profile image, when one is set;
 - `session.properties` stores only the remembered account email.
 
 Passwords and reset codes are never stored in plain text: they are derived with PBKDF2. In this local demo, the reset code is shown in the application and expires after 15 minutes.
@@ -60,7 +60,7 @@ Persistence is separated behind `UserRepository` and `CrmDataRepository`; future
 
 ### Account
 - **Remember me** — optionally reopen the last authenticated account on the next launch without storing a password.
-- **Profile avatar** — choose, crop, and save a profile image locally for each account.
+- **Profile avatar** — choose and crop a PNG/JPG from 300x300 up to 20000x20000 pixels (maximum upload 10 MB); the app creates a memory-bounded, high-quality local rendition for the current display scale.
 
 ### Navigation
 The left sidebar provides access to all sections:
