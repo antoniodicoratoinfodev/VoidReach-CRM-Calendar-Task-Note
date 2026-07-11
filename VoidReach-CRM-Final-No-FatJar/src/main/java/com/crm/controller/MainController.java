@@ -30,7 +30,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
