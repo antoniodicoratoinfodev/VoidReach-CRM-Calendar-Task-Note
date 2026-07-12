@@ -102,6 +102,12 @@ public class AvatarService {
     }
 
     public Image loadAvatar(UserAccount user, int pixelSize) {
+        BufferedImage rendition = loadAvatarRendition(user, pixelSize);
+        return rendition == null ? null : SwingFXUtils.toFXImage(rendition, null);
+    }
+
+    /** Performs file decoding and resizing without constructing JavaFX image objects. */
+    public BufferedImage loadAvatarRendition(UserAccount user, int pixelSize) {
         Path path = getAvatarPath(user);
         if (path == null || pixelSize <= 0 || !Files.isRegularFile(path)) {
             return null;
@@ -111,8 +117,7 @@ public class AvatarService {
             if (master == null || master.getWidth() <= 0 || master.getHeight() <= 0) {
                 return null;
             }
-            BufferedImage rendition = AvatarImageProcessor.resizeLanczos(master, pixelSize);
-            return SwingFXUtils.toFXImage(rendition, null);
+            return AvatarImageProcessor.resizeLanczos(master, pixelSize);
         } catch (IOException | RuntimeException ex) {
             return null;
         }

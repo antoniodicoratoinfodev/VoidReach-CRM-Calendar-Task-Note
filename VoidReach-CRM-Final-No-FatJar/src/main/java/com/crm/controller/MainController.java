@@ -54,6 +54,7 @@ public final class MainController {
     @FXML private Button themeToggleBtn;
     @FXML private FontIcon themeToggleIcon;
     @FXML private Label currentUserLabel;
+    @FXML private Label saveStatusLabel;
     @FXML private Button accountMenuButton;
     @FXML private FontIcon defaultAvatarIcon;
     @FXML private ImageView avatarImage;
@@ -63,8 +64,10 @@ public final class MainController {
     @FXML private ScrollPane calendarScrollPane;
     @FXML private DatePicker calendarDatePicker;
     @FXML private ComboBox<String> viewModeCombo;
+    @FXML private Label selectedPeriodLabel;
     @FXML private Label miniMonthYearLabel;
     @FXML private GridPane miniCalendarGrid;
+    @FXML private Label activitiesTitle;
     @FXML private VBox upcomingActivitiesList;
 
     private final CrmWorkspaceService workspaceService = new CrmWorkspaceService();
@@ -89,8 +92,8 @@ public final class MainController {
                 paginationInfoLabel, selectContactsBtn, themeService,
                 this::saveCurrentData);
         calendarController = new CalendarController(calendarView, timeLabelsContainer,
-                calendarTimelineArea, calendarScrollPane, calendarDatePicker, viewModeCombo,
-                miniMonthYearLabel, miniCalendarGrid, upcomingActivitiesList, themeService,
+                calendarTimelineArea, calendarScrollPane, calendarDatePicker, viewModeCombo, selectedPeriodLabel,
+                miniMonthYearLabel, miniCalendarGrid, activitiesTitle, upcomingActivitiesList, themeService,
                 dialogService, this::saveCurrentData, navigationController::showCalendar);
         accountController = new AccountController(currentUserLabel, accountMenuButton,
                 defaultAvatarIcon, avatarImage, themeService, dialogService);
@@ -105,17 +108,22 @@ public final class MainController {
         this.logoutAction = logoutAction;
         accountController.setCurrentUser(user, this::logout);
         loadingWorkspace = true;
-        try {
-            applyUserData(workspaceService.open(user));
-        } catch (IllegalStateException exception) {
-            LocalDate today = LocalDate.now();
-            applyUserData(new CrmDataSnapshot(new ArrayList<>(), new HashMap<>(), today, "Day", 1.0));
-            Platform.runLater(() -> dialogService.showError("Dati locali non leggibili",
-                    "Non è stato possibile recuperare il file dati né il suo backup. "
-                            + "L'area di lavoro resta aperta senza sovrascrivere il file finché non effettui una modifica."));
-        } finally {
-            loadingWorkspace = false;
-        }
+        setSaveStatus("Caricamento dati…");
+        workspaceService.openAsync(user).whenComplete((snapshot, failure) -> Platform.runLater(() -> {
+            try {
+                if (failure == null) applyUserData(snapshot);
+                else {
+                    LocalDate today = LocalDate.now();
+                    applyUserData(new CrmDataSnapshot(new ArrayList<>(), new HashMap<>(), today, "Day", 1.0));
+                    dialogService.showError("Dati locali non leggibili",
+                            "Non è stato possibile recuperare il file dati né il suo backup. "
+                                    + "L'area di lavoro resta aperta senza sovrascrivere il file finché non effettui una modifica.");
+                }
+            } finally {
+                loadingWorkspace = false;
+                setSaveStatus(failure == null ? "Dati caricati" : "Dati non caricati");
+            }
+        }));
     }
 
     public void requestInitialFocus() {
@@ -130,14 +138,10 @@ public final class MainController {
 
     private void saveCurrentData() {
         if (loadingWorkspace || calendarController.selectedDate() == null) return;
-        try {
-            workspaceService.save(new CrmDataSnapshot(contactsController.snapshot(),
-                    calendarController.tasksSnapshot(), calendarController.selectedDate(),
-                    calendarController.viewMode(), calendarController.zoom()));
-        } catch (IllegalStateException exception) {
-            dialogService.showError("Dati non salvati",
-                    "Non è stato possibile salvare i dati sul disco. Il lavoro resta aperto in questa sessione e potrai riprovare.");
-        }
+        CrmDataSnapshot snapshot = CrmDataSnapshot.detachedCopyOf(contactsController.snapshot(),
+                calendarController.tasksSnapshot(), calendarController.selectedDate(),
+                calendarController.viewMode(), calendarController.zoom());
+        workspaceService.requestSave(snapshot, state -> Platform.runLater(() -> handleSaveState(state)));
     }
 
     private Window ownerWindow() {
@@ -146,8 +150,28 @@ public final class MainController {
     }
 
     private void logout() {
-        workspaceService.close();
-        if (logoutAction != null) logoutAction.run();
+        loadingWorkspace = true;
+        setSaveStatus("Salvataggio finale…");
+        workspaceService.closeAsync().whenComplete((ignored, failure) -> Platform.runLater(() -> {
+            loadingWorkspace = false;
+            if (failure != null) dialogService.showError("Dati non salvati",
+                    "Non è stato possibile completare il salvataggio prima dell'uscita.");
+            if (logoutAction != null) logoutAction.run();
+        }));
+    }
+
+    private void handleSaveState(CrmWorkspaceService.SaveState state) {
+        if (state == CrmWorkspaceService.SaveState.SAVING) setSaveStatus("Salvataggio…");
+        else if (state == CrmWorkspaceService.SaveState.SAVED) setSaveStatus("Salvato");
+        else {
+            setSaveStatus("Salvataggio non riuscito");
+            dialogService.showError("Dati non salvati",
+                    "Non è stato possibile salvare i dati sul disco. Il lavoro resta aperto in questa sessione e potrai riprovare.");
+        }
+    }
+
+    private void setSaveStatus(String status) {
+        if (saveStatusLabel != null) saveStatusLabel.setText(status);
     }
 
     @FXML private void handleAccountMenu() { accountController.showMenu(); }

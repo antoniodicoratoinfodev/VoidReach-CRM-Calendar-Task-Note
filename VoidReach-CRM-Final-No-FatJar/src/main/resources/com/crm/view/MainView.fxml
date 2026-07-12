@@ -60,6 +60,7 @@
         <VBox>
             <!-- Navbar -->
             <HBox styleClass="navbar" spacing="25" alignment="CENTER_LEFT">
+                <Label fx:id="saveStatusLabel" text="" style="-fx-text-fill: #94a3b8; -fx-font-size: 11px;"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 
                 <HBox spacing="15" alignment="CENTER">
@@ -132,6 +133,7 @@
                             <Button text="&lt;" onAction="#handlePrevDay" style="-fx-background-color: transparent;"/>
                             <Button text="&gt;" onAction="#handleNextDay" style="-fx-background-color: transparent;"/>
                         </HBox>
+                        <Label fx:id="selectedPeriodLabel" text="Il giorno selezionato:" style="-fx-text-fill: #64748b; -fx-font-size: 13px;"/>
                         <Region HBox.hgrow="ALWAYS"/>
                         <ComboBox fx:id="viewModeCombo" prefWidth="100" promptText="Day"/>
                     </HBox>
@@ -177,7 +179,7 @@
             </VBox>
             
             <VBox spacing="20" VBox.vgrow="ALWAYS">
-                <Label text="Activities for Selected Day" style="-fx-font-weight: 700; -fx-font-size: 13px;"/>
+                <Label fx:id="activitiesTitle" text="Activities for Selected Day" style="-fx-font-weight: 700; -fx-font-size: 13px;"/>
                 <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
                     <VBox fx:id="upcomingActivitiesList" spacing="15">
                         <!-- Dynamic list of tasks -->

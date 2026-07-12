@@ -3,8 +3,11 @@ package com.crm.controller;
 import com.crm.model.UserAccount;
 import com.crm.repository.LocalUserRepository;
 import com.crm.service.AuthService;
+import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -56,71 +59,88 @@ public class LoginController {
     }
 
     @FXML private void handleLogin() {
-        UserAccount user;
-        try {
-            user = auth.login(loginEmail.getText(), loginPassword.getText());
-        } catch (IllegalArgumentException e) {
-            loginMessage.setText(e.getMessage());
-            return;
-        } catch (IllegalStateException e) {
-            loginMessage.setText("Impossibile leggere i dati locali. Il backup verrà usato se disponibile.");
-            return;
-        } finally {
-            loginPassword.clear();
-        }
-        authenticated.accept(user, rememberLogin.isSelected());
+        String email = loginEmail.getText();
+        String password = loginPassword.getText();
+        boolean remember = rememberLogin.isSelected();
+        loginPassword.clear();
+        runAuthTask(loginPane, "Accesso in corso…", () -> auth.login(email, password),
+                user -> authenticated.accept(user, remember),
+                message -> loginMessage.setText(message));
     }
 
     @FXML private void handleRegister() {
-        UserAccount user;
         try {
             if (!registerPassword.getText().equals(registerPasswordConfirm.getText())) throw new IllegalArgumentException("Le password non coincidono.");
-            user = auth.register(registerName.getText(), registerEmail.getText(), registerPassword.getText());
         } catch (IllegalArgumentException e) {
             registerMessage.setText(e.getMessage());
             return;
-        } catch (IllegalStateException e) {
-            registerMessage.setText("Impossibile salvare l'account. Riprova senza chiudere l'app.");
-            return;
-        } finally {
-            registerPassword.clear();
-            registerPasswordConfirm.clear();
         }
-        authenticated.accept(user, false);
+        String name = registerName.getText();
+        String email = registerEmail.getText();
+        String password = registerPassword.getText();
+        registerPassword.clear();
+        registerPasswordConfirm.clear();
+        runAuthTask(registerPane, "Creazione account…", () -> auth.register(name, email, password),
+                user -> authenticated.accept(user, false),
+                message -> registerMessage.setText(message));
     }
 
     @FXML private void handleRecovery() {
-        try {
-            String email = recoveryEmail.getText().trim();
-            String code = auth.requestPasswordReset(email);
+        String email = recoveryEmail.getText().trim();
+        runAuthTask(recoveryPane, "Generazione codice…", () -> auth.requestPasswordReset(email), code -> {
             recoveryEmail.clear();
             show(resetPane);
             resetEmail.setText(email);
             resetMessage.setText("Codice locale generato. Per questa demo: " + code + " (valido 15 minuti).");
-        } catch (IllegalArgumentException e) { recoveryMessage.setText(e.getMessage()); }
-        catch (IllegalStateException e) { recoveryMessage.setText("Impossibile salvare la richiesta di recupero. Riprova senza chiudere l'app."); }
+        }, message -> recoveryMessage.setText(message));
     }
 
     @FXML private void handleReset() {
-        String email;
         try {
             if (!resetPassword.getText().equals(resetPasswordConfirm.getText())) throw new IllegalArgumentException("Le password non coincidono.");
-            email = resetEmail.getText();
-            auth.resetPassword(email, resetCode.getText(), resetPassword.getText());
         } catch (IllegalArgumentException e) {
             resetMessage.setText(e.getMessage());
             return;
-        } catch (IllegalStateException e) {
-            resetMessage.setText("Impossibile salvare la nuova password. Riprova senza chiudere l'app.");
-            return;
-        } finally {
-            resetPassword.clear();
-            resetPasswordConfirm.clear();
-            resetCode.clear();
         }
-        loginEmail.setText(email);
-        resetEmail.clear();
-        show(loginPane);
-        loginMessage.setText("Password aggiornata. Ora puoi accedere.");
+        String email = resetEmail.getText();
+        String code = resetCode.getText();
+        String password = resetPassword.getText();
+        resetPassword.clear();
+        resetPasswordConfirm.clear();
+        resetCode.clear();
+        runAuthTask(resetPane, "Aggiornamento password…", () -> {
+            auth.resetPassword(email, code, password);
+            return null;
+        }, ignored -> {
+            loginEmail.setText(email);
+            resetEmail.clear();
+            show(loginPane);
+            loginMessage.setText("Password aggiornata. Ora puoi accedere.");
+        }, message -> resetMessage.setText(message));
+    }
+
+    private <T> void runAuthTask(VBox pane, String status, Callable<T> operation,
+                                 Consumer<T> onSuccess, Consumer<String> onFailure) {
+        pane.setDisable(true);
+        Label message = pane == loginPane ? loginMessage
+                : pane == registerPane ? registerMessage
+                : pane == recoveryPane ? recoveryMessage : resetMessage;
+        message.setText(status);
+        Task<T> task = new Task<>() {
+            @Override protected T call() throws Exception { return operation.call(); }
+        };
+        task.setOnSucceeded(event -> {
+            pane.setDisable(false);
+            onSuccess.accept(task.getValue());
+        });
+        task.setOnFailed(event -> {
+            pane.setDisable(false);
+            Throwable failure = task.getException();
+            if (failure instanceof IllegalArgumentException && failure.getMessage() != null) onFailure.accept(failure.getMessage());
+            else onFailure.accept("Impossibile completare l'operazione sui dati locali. Riprova senza chiudere l'app.");
+        });
+        Thread worker = new Thread(task, "voidreach-auth-worker");
+        worker.setDaemon(true);
+        worker.start();
     }
 }

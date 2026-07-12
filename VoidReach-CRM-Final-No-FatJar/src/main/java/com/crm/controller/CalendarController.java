@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +43,10 @@ public final class CalendarController {
     private final ScrollPane scrollPane;
     private final DatePicker datePicker;
     private final ComboBox<String> viewModeCombo;
+    private final Label selectedPeriodLabel;
     private final Label miniMonthYearLabel;
     private final GridPane miniCalendarGrid;
+    private final Label activitiesTitle;
     private final VBox upcomingActivitiesList;
     private final ThemeService themeService;
     private final DialogService dialogService;
@@ -67,8 +70,8 @@ public final class CalendarController {
     public CalendarController(VBox calendarView, AnchorPane timeLabelsContainer,
                               AnchorPane timelineArea, ScrollPane scrollPane,
                               DatePicker datePicker, ComboBox<String> viewModeCombo,
-                              Label miniMonthYearLabel, GridPane miniCalendarGrid,
-                              VBox upcomingActivitiesList, ThemeService themeService,
+                              Label selectedPeriodLabel, Label miniMonthYearLabel, GridPane miniCalendarGrid,
+                              Label activitiesTitle, VBox upcomingActivitiesList, ThemeService themeService,
                               DialogService dialogService, Runnable dataChanged,
                               Runnable showCalendar) {
         this.calendarView = Objects.requireNonNull(calendarView);
@@ -77,8 +80,10 @@ public final class CalendarController {
         this.scrollPane = Objects.requireNonNull(scrollPane);
         this.datePicker = Objects.requireNonNull(datePicker);
         this.viewModeCombo = Objects.requireNonNull(viewModeCombo);
+        this.selectedPeriodLabel = Objects.requireNonNull(selectedPeriodLabel);
         this.miniMonthYearLabel = Objects.requireNonNull(miniMonthYearLabel);
         this.miniCalendarGrid = Objects.requireNonNull(miniCalendarGrid);
+        this.activitiesTitle = Objects.requireNonNull(activitiesTitle);
         this.upcomingActivitiesList = Objects.requireNonNull(upcomingActivitiesList);
         this.themeService = Objects.requireNonNull(themeService);
         this.dialogService = Objects.requireNonNull(dialogService);
@@ -266,6 +271,7 @@ public final class CalendarController {
             viewMode = newValue;
             if (newValue.equals("Week")) weekStartDate = weekStart(datePicker.getValue());
             render();
+            updateSidebar();
             notifyDataChanged();
         });
     }
@@ -500,6 +506,7 @@ public final class CalendarController {
     }
 
     private void updateSidebar() {
+        updateSelectedPeriodLabel();
         miniMonthYearLabel.setText(currentMiniMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")));
         miniCalendarGrid.getChildren().clear();
         String[] days = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
@@ -524,28 +531,65 @@ public final class CalendarController {
             miniCalendarGrid.add(day, (index + dayOffset) % 7, (index + dayOffset) / 7 + 1);
         }
         upcomingActivitiesList.getChildren().clear();
-        List<Task> tasks = tasksByDate.getOrDefault(datePicker.getValue(), List.of());
+        boolean weekView = "Week".equals(viewMode);
+        activitiesTitle.setText(weekView ? "Activities for Selected Week" : "Activities for Selected Day");
+        List<SidebarTask> tasks = sidebarTasks(weekView);
         if (tasks.isEmpty()) {
-            Label empty = new Label("No activities for this day.");
+            Label empty = new Label(weekView ? "No activities for this week." : "No activities for this day.");
             empty.setStyle("-fx-font-style: italic; -fx-padding: 10; -fx-text-fill: "
                     + (themeService.isDarkMode() ? "#64748b;" : "#94a3b8;"));
             upcomingActivitiesList.getChildren().add(empty);
             return;
         }
-        for (Task task : tasks) {
+        for (SidebarTask sidebarTask : tasks) {
+            Task task = sidebarTask.task();
             VBox item = new VBox(5);
             item.getStyleClass().add("activity-item");
             Label time = new Label(String.format("%02d:%02d - %02d:%02d", task.getStartMin() / 60,
                     task.getStartMin() % 60, (task.getStartMin() + task.getDuration()) / 60,
                     (task.getStartMin() + task.getDuration()) % 60));
             time.getStyleClass().add("activity-time");
-            Label title = new Label(task.getTitle());
+            String titleText = weekView
+                    ? sidebarTask.date().format(DateTimeFormatter.ofPattern("EEEE d")) + " " + task.getTitle()
+                    : task.getTitle();
+            Label title = new Label(titleText);
             title.getStyleClass().add("activity-title");
             item.getChildren().addAll(time, title);
-            item.setOnMouseClicked(event -> showCalendar.run());
+            item.setOnMouseClicked(event -> {
+                if (weekView) selectDate(sidebarTask.date());
+                showCalendar.run();
+            });
             upcomingActivitiesList.getChildren().add(item);
         }
     }
+
+    private void updateSelectedPeriodLabel() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        if ("Week".equals(viewMode)) {
+            LocalDate start = weekStartDate;
+            selectedPeriodLabel.setText("La settimana selezionata: " + formatter.format(start)
+                    + " - " + formatter.format(start.plusDays(6)));
+        } else {
+            selectedPeriodLabel.setText("Il giorno selezionato: " + formatter.format(datePicker.getValue()));
+        }
+    }
+
+    private List<SidebarTask> sidebarTasks(boolean weekView) {
+        if (!weekView) return tasksByDate.getOrDefault(datePicker.getValue(), List.of()).stream()
+                .sorted(Comparator.comparingInt(Task::getStartMin))
+                .map(task -> new SidebarTask(datePicker.getValue(), task))
+                .toList();
+
+        LocalDate start = weekStartDate;
+        return tasksByDate.entrySet().stream()
+                .filter(entry -> !entry.getKey().isBefore(start) && entry.getKey().isBefore(start.plusDays(7)))
+                .flatMap(entry -> entry.getValue().stream().map(task -> new SidebarTask(entry.getKey(), task)))
+                .sorted(Comparator.comparing(SidebarTask::date)
+                        .thenComparing(entry -> entry.task().getStartMin()))
+                .toList();
+    }
+
+    private record SidebarTask(LocalDate date, Task task) { }
 
     private void selectDate(LocalDate date) {
         if (date.equals(datePicker.getValue())) refreshForSelectedDate(date);

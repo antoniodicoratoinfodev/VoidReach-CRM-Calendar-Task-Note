@@ -72,7 +72,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
                 <configuration>
-                    <argLine>--enable-native-access=ALL-UNNAMED</argLine>
+                    <!-- Forked OpenJDK 26 test JVMs intermittently abort on macOS before tests start. -->
+                    <forkCount>0</forkCount>
                 </configuration>
             </plugin>
 

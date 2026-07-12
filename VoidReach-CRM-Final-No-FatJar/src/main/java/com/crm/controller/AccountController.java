@@ -29,6 +29,7 @@ import javafx.stage.Window;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
+import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -51,6 +52,7 @@ public final class AccountController {
     private Window avatarScaleWindow;
     private UserAccount currentUser;
     private Runnable logoutAction;
+    private long avatarLoadVersion;
 
     public AccountController(Label currentUserLabel, Button accountMenuButton,
                              FontIcon defaultAvatarIcon, ImageView avatarImage,
@@ -113,7 +115,7 @@ public final class AccountController {
             dialogService.showError("Immagine non valida", "Non è stato possibile leggere il file selezionato.");
             return;
         }
-        runAvatarTask("Preparazione dell'immagine...", "Immagine non valida",
+        runBackgroundTask("Immagine profilo", "Preparazione dell'immagine...", "Immagine non valida",
                 () -> avatarService.prepareSource(selectedPath), this::showAvatarCropDialog);
     }
 
@@ -215,7 +217,7 @@ public final class AccountController {
         dialog.getDialogPane().setContent(content);
         if (dialog.showAndWait().filter(result -> result == save).isPresent()) {
             CropSelection crop = renderer.selection();
-            runAvatarTask("Ottimizzazione dell'avatar...", "Immagine non aggiornata", () -> {
+            runBackgroundTask("Immagine profilo", "Ottimizzazione dell'avatar...", "Immagine non aggiornata", () -> {
                 avatarService.updateAvatar(currentUser, source, crop);
                 return null;
             }, ignored -> refreshAvatar());
@@ -223,8 +225,28 @@ public final class AccountController {
     }
 
     private void refreshAvatar() {
-        if (currentUser == null) return;
-        Image image = avatarService.loadAvatar(currentUser, navbarAvatarPixelSize());
+        UserAccount user = currentUser;
+        if (user == null) return;
+        int pixelSize = navbarAvatarPixelSize();
+        long requestVersion = ++avatarLoadVersion;
+        javafx.concurrent.Task<BufferedImage> task = new javafx.concurrent.Task<>() {
+            @Override protected BufferedImage call() { return avatarService.loadAvatarRendition(user, pixelSize); }
+        };
+        task.setOnSucceeded(event -> {
+            if (currentUser != user || requestVersion != avatarLoadVersion) return;
+            BufferedImage rendition = task.getValue();
+            Image image = rendition == null ? null : SwingFXUtils.toFXImage(rendition, null);
+            applyAvatarImage(image);
+        });
+        task.setOnFailed(event -> {
+            if (currentUser == user && requestVersion == avatarLoadVersion) applyAvatarImage(null);
+        });
+        Thread worker = new Thread(task, "avatar-load-worker");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private void applyAvatarImage(Image image) {
         boolean available = image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0;
         if (available) avatarImage.setImage(image);
         avatarImage.setVisible(available);
@@ -259,7 +281,7 @@ public final class AccountController {
         avatarScaleWindow = null;
     }
 
-    private <T> void runAvatarTask(String statusText, String errorTitle,
+    private <T> void runBackgroundTask(String dialogTitle, String statusText, String errorTitle,
                                    Callable<T> operation, Consumer<T> onSuccess) {
         javafx.concurrent.Task<T> task = new javafx.concurrent.Task<>() {
             @Override protected T call() throws Exception { return operation.call(); }
@@ -269,7 +291,7 @@ public final class AccountController {
         HBox content = new HBox(12, progressIndicator, new Label(statusText));
         content.setAlignment(Pos.CENTER_LEFT);
         Dialog<Void> progressDialog = new Dialog<>();
-        progressDialog.setTitle("Immagine profilo");
+        progressDialog.setTitle(dialogTitle);
         themeService.applyTo(progressDialog);
         progressDialog.getDialogPane().setContent(content);
         progressDialog.getDialogPane().setPrefWidth(360);
@@ -308,15 +330,11 @@ public final class AccountController {
         grid.addRow(1, new Label("Email:"), email);
         dialog.getDialogPane().setContent(grid);
         if (dialog.showAndWait().filter(result -> result == save).isPresent()) {
-            try {
-                authService.updateProfile(currentUser, name.getText());
-                currentUserLabel.setText(currentUser.getFullName());
-            } catch (IllegalArgumentException exception) {
-                dialogService.showError("Profilo non aggiornato", exception.getMessage());
-            } catch (IllegalStateException exception) {
-                dialogService.showError("Profilo non salvato",
-                        "Non è stato possibile salvare il profilo. Il lavoro resta aperto in questa sessione e potrai riprovare.");
-            }
+            String fullName = name.getText();
+            runBackgroundTask("Profilo e account", "Salvataggio profilo…", "Profilo non salvato", () -> {
+                authService.updateProfile(currentUser, fullName);
+                return currentUser.getFullName();
+            }, currentUserLabel::setText);
         }
     }
 
@@ -339,27 +357,19 @@ public final class AccountController {
         grid.addRow(1, new Label("Nuova password:"), next);
         grid.addRow(2, new Label("Conferma password:"), confirm);
         dialog.getDialogPane().setContent(grid);
-        boolean changed = false;
-        String error = null;
-        try {
-            if (dialog.showAndWait().filter(result -> result == save).isPresent()) {
-                try {
-                    if (!next.getText().equals(confirm.getText()))
-                        throw new IllegalArgumentException("Le password non coincidono.");
-                    authService.changePassword(currentUser, current.getText(), next.getText());
-                    changed = true;
-                } catch (IllegalArgumentException exception) {
-                    error = exception.getMessage();
-                } catch (IllegalStateException exception) {
-                    error = "Non è stato possibile salvare la password. Riprova senza chiudere l'app.";
-                }
-            }
-        } finally {
-            current.clear();
-            next.clear();
-            confirm.clear();
+        if (dialog.showAndWait().filter(result -> result == save).isEmpty()) return;
+        if (!next.getText().equals(confirm.getText())) {
+            dialogService.showError("Password non aggiornata", "Le password non coincidono.");
+            return;
         }
-        if (changed) dialogService.showInfo("Password aggiornata", "La password del tuo account è stata aggiornata.");
-        else if (error != null) dialogService.showError("Password non aggiornata", error);
+        String currentPassword = current.getText();
+        String nextPassword = next.getText();
+        current.clear();
+        next.clear();
+        confirm.clear();
+        runBackgroundTask("Sicurezza account", "Aggiornamento password…", "Password non aggiornata", () -> {
+            authService.changePassword(currentUser, currentPassword, nextPassword);
+            return null;
+        }, ignored -> dialogService.showInfo("Password aggiornata", "La password del tuo account è stata aggiornata."));
     }
 }
