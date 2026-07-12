@@ -101,8 +101,11 @@ public final class MainController {
     @FXML private TilePane notesGrid;
     @FXML private Label notesEmptyLabel;
     @FXML private Label notesCountLabel;
+    @FXML private Button notesBackButton;
+    @FXML private Label notesLocationLabel;
     @FXML private TextField noteTitleField;
     @FXML private Label noteFormatLabel;
+    @FXML private ComboBox<NotesController.FolderOption> noteFolderCombo;
     @FXML private ComboBox<NotesController.TaskOption> noteTaskCombo;
     @FXML private Button noteOpenTaskButton;
     @FXML private HBox markdownToolbar;
@@ -180,6 +183,7 @@ public final class MainController {
                 dialogService, this::handleDataChanged, navigationController::showCalendar);
         notesController = new NotesController(notesLibraryPane, noteEditorPane, notesSearchField,
                 notesGrid, notesEmptyLabel, notesCountLabel, noteTitleField, noteFormatLabel,
+                notesBackButton, notesLocationLabel, noteFolderCombo,
                 noteTaskCombo, noteOpenTaskButton, markdownToolbar, notePreviewToggle,
                 noteFontFamilyCombo, noteFontSizeCombo, noteFontWeightCombo, noteBoldToggle, noteItalicToggle,
                 notePreviewSettingsBar, notePreviewFontFamilyCombo, notePreviewFontSizeCombo, notePreviewColorPicker,
@@ -279,7 +283,7 @@ public final class MainController {
         contactsController.setContacts(snapshot.contacts());
         calendarController.applyState(snapshot.tasksByDate(), snapshot.selectedDate(),
                 snapshot.calendarViewMode(), snapshot.calendarZoom());
-        notesController.applyState(snapshot.notes(), calendarController.tasksSnapshot());
+        notesController.applyState(snapshot.notes(), snapshot.noteFolders(), calendarController.tasksSnapshot());
         tasksController.refresh(calendarController.tasksSnapshot());
         refreshOverview();
     }
@@ -299,8 +303,8 @@ public final class MainController {
     private void saveCurrentData() {
         if (loadingWorkspace || calendarController.selectedDate() == null) return;
         CrmDataSnapshot snapshot = CrmDataSnapshot.detachedCopyOf(contactsController.snapshot(),
-                calendarController.tasksSnapshot(), notesController.snapshot(), calendarController.selectedDate(),
-                calendarController.viewMode(), calendarController.zoom());
+                calendarController.tasksSnapshot(), notesController.snapshot(), notesController.foldersSnapshot(),
+                calendarController.selectedDate(), calendarController.viewMode(), calendarController.zoom());
         workspaceService.requestSave(snapshot, state -> Platform.runLater(() -> handleSaveState(state)));
     }
 
@@ -339,6 +343,8 @@ public final class MainController {
     @FXML private void handleAddContact() { contactsController.addContact(); }
     @FXML private void handleAddTask() { calendarController.createTask(LocalDate.now()); }
     @FXML private void handleAddNote() { notesController.createNote(); }
+    @FXML private void handleAddNoteFolder() { notesController.createFolder(); }
+    @FXML private void handleOpenNotesRoot() { notesController.openRoot(); }
     @FXML private void handleCloseNote() { notesController.closeEditor(); }
     @FXML private void handleDeleteNote() { notesController.deleteCurrent(); }
     @FXML private void handleOpenLinkedTask() { notesController.openLinkedTask(); }

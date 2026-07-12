@@ -21,6 +21,7 @@ public final class Note {
     private String previewFontFamily;
     private double previewFontSize;
     private String previewTextColor;
+    private String folderId;
 
     public Note(String title, NoteFormat format) {
         this(UUID.randomUUID().toString(), title, "", format, "");
@@ -40,6 +41,13 @@ public final class Note {
     public Note(String id, String title, String content, NoteFormat format, String linkedTaskId,
                 String fontFamily, double fontSize, int fontWeight, boolean italic,
                 String previewFontFamily, double previewFontSize, String previewTextColor) {
+        this(id, title, content, format, linkedTaskId, fontFamily, fontSize, fontWeight, italic,
+                previewFontFamily, previewFontSize, previewTextColor, "");
+    }
+
+    public Note(String id, String title, String content, NoteFormat format, String linkedTaskId,
+                String fontFamily, double fontSize, int fontWeight, boolean italic,
+                String previewFontFamily, double previewFontSize, String previewTextColor, String folderId) {
         this.id = requireId(id);
         this.title = safe(title);
         this.content = safe(content);
@@ -52,6 +60,7 @@ public final class Note {
         setPreviewFontFamily(previewFontFamily);
         setPreviewFontSize(previewFontSize);
         setPreviewTextColor(previewTextColor);
+        this.folderId = safe(folderId);
     }
 
     public String getId() { return id; }
@@ -102,6 +111,8 @@ public final class Note {
         }
         this.previewTextColor = value.toUpperCase();
     }
+    public String getFolderId() { return folderId; }
+    public void setFolderId(String folderId) { this.folderId = safe(folderId); }
 
     private static String requireId(String value) {
         if (value == null || value.isBlank()) throw new IllegalArgumentException("A note must have an ID.");

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.crm.model.Contact;
 import com.crm.model.CrmDataSnapshot;
 import com.crm.model.Note;
+import com.crm.model.NoteFolder;
 import com.crm.model.NoteFormat;
 import com.crm.model.Task;
 import java.io.InputStream;
@@ -70,14 +71,16 @@ class LocalCrmDataRepositoryTest {
         LocalCrmDataRepository repository = new LocalCrmDataRepository(directory);
         LocalDate date = LocalDate.of(2026, 7, 12);
         Task task = new Task("task-linked", "Ship release", "", 600, 45, "Blue");
+        NoteFolder projects = new NoteFolder("folder-projects", "Projects");
         Note markdown = new Note("note-md", "Release plan", "# Plan\n\n- [ ] Ship\n[[Research]] ✨",
                 NoteFormat.MARKDOWN, task.getId(), "Georgia", 22, 700, true,
-                "Arial", 26, "#224466");
+                "Arial", 26, "#224466", projects.getId());
         Note text = new Note("note-txt", "Research", "Plain text\nwith multiple lines",
                 NoteFormat.TEXT, "");
 
         repository.saveForUser("notes-account", new CrmDataSnapshot(
-                List.of(), Map.of(date, List.of(task)), List.of(markdown, text), date, "Day", 1.0));
+                List.of(), Map.of(date, List.of(task)), List.of(markdown, text), List.of(projects),
+                date, "Day", 1.0));
 
         CrmDataSnapshot loaded = repository.loadForUser("notes-account");
 
@@ -92,8 +95,12 @@ class LocalCrmDataRepositoryTest {
         assertEquals("Arial", loaded.notes().getFirst().getPreviewFontFamily());
         assertEquals(26, loaded.notes().getFirst().getPreviewFontSize());
         assertEquals("#224466", loaded.notes().getFirst().getPreviewTextColor());
+        assertEquals("folder-projects", loaded.notes().getFirst().getFolderId());
+        assertEquals(List.of("folder-projects"), loaded.noteFolders().stream().map(NoteFolder::getId).toList());
+        assertEquals("Projects", loaded.noteFolders().getFirst().getName());
         assertEquals(NoteFormat.TEXT, loaded.notes().get(1).getFormat());
         assertEquals(Note.DEFAULT_FONT_SIZE, loaded.notes().get(1).getFontSize());
+        assertEquals("", loaded.notes().get(1).getFolderId());
     }
 
     private static Properties load(Path file) throws Exception {

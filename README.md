@@ -126,6 +126,10 @@ The Notes section provides a per-account knowledge workspace.
 #### Note Library
 
 - Create any number of notes.
+- Create persistent folders with **Add folder** and open them like a dedicated workspace.
+- Drag a complete note card onto a folder to move it there.
+- Move a note between folders, or back to **All notes**, from the folder selector in the editor.
+- Rename folders or delete them; deleting a folder safely moves its notes back to **All notes**.
 - Choose Plain text (`.txt`) or Markdown (`.md`) when creating a note.
 - Search by title or content.
 - Reorder note cards with drag and drop.
@@ -246,6 +250,7 @@ The last selected theme is stored per account and restored when that account ope
 | Calendar | `Ctrl+0` / `Cmd+0` resets zoom |
 | Tasks | Click a task row to edit it |
 | Notes | Drag a note card to reorder it |
+| Notes | Drag a note card onto a folder to move it |
 | Markdown | `Ctrl+B` / `Cmd+B` inserts bold syntax |
 | Markdown | `Ctrl+I` / `Cmd+I` inserts italic syntax |
 | Markdown | Tab inserts four spaces |

@@ -1147,6 +1147,28 @@
 .notes-scroll, .notes-scroll > .viewport { -fx-background-color: transparent; -fx-background: transparent; }
 .notes-grid { -fx-padding: 2 2 18 2; }
 .notes-empty { -fx-max-width: infinity; -fx-alignment: CENTER; -fx-padding: 34; -fx-text-fill: #64748b; }
+.notes-breadcrumb-bar {
+    -fx-min-height: 38; -fx-padding: 7 11;
+    -fx-background-color: #111a2c; -fx-background-radius: 10;
+    -fx-border-color: #263449; -fx-border-radius: 10;
+}
+.notes-location-label { -fx-text-fill: #cbd5e1; -fx-font-size: 12px; -fx-font-weight: 800; }
+.note-folder-location-icon, .note-folder-icon { -fx-icon-color: #fbbf24; }
+.note-folder-back { -fx-min-width: 28; -fx-min-height: 26; -fx-pref-width: 28; -fx-pref-height: 26; }
+.note-folder-card {
+    -fx-min-height: 174; -fx-padding: 16;
+    -fx-background-color: #111a2c; -fx-background-radius: 12;
+    -fx-border-color: #263449; -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 12, 0.08, 0, 3);
+    -fx-cursor: hand;
+}
+.note-folder-card:hover { -fx-background-color: #211d19; -fx-border-color: #f59e0b; }
+.note-folder-drop-target { -fx-border-color: #fbbf24; -fx-border-width: 2; -fx-background-color: #3a2a13; }
+.note-folder-title { -fx-text-fill: #f1f5f9; -fx-font-size: 15px; -fx-font-weight: 800; }
+.note-folder-count { -fx-text-fill: #94a3b8; -fx-font-size: 11px; }
+.note-folder-menu { -fx-min-width: 28; -fx-min-height: 28; -fx-padding: 0; }
+.note-folder-menu .ikonli-font-icon { -fx-icon-color: #94a3b8; }
+.note-folder-combo { -fx-min-height: 38; }
 .note-card {
     -fx-min-height: 174; -fx-padding: 16;
     -fx-background-color: #111a2c; -fx-background-radius: 12;

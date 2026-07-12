@@ -10,13 +10,20 @@ public record CrmDataSnapshot(
         List<Contact> contacts,
         Map<LocalDate, List<Task>> tasksByDate,
         List<Note> notes,
+        List<NoteFolder> noteFolders,
         LocalDate selectedDate,
         String calendarViewMode,
         double calendarZoom) {
 
     public CrmDataSnapshot(List<Contact> contacts, Map<LocalDate, List<Task>> tasksByDate,
                            LocalDate selectedDate, String calendarViewMode, double calendarZoom) {
-        this(contacts, tasksByDate, List.of(), selectedDate, calendarViewMode, calendarZoom);
+        this(contacts, tasksByDate, List.of(), List.of(), selectedDate, calendarViewMode, calendarZoom);
+    }
+
+    public CrmDataSnapshot(List<Contact> contacts, Map<LocalDate, List<Task>> tasksByDate,
+                           List<Note> notes, LocalDate selectedDate,
+                           String calendarViewMode, double calendarZoom) {
+        this(contacts, tasksByDate, notes, List.of(), selectedDate, calendarViewMode, calendarZoom);
     }
 
     /**
@@ -26,6 +33,7 @@ public record CrmDataSnapshot(
     public static CrmDataSnapshot detachedCopyOf(List<Contact> contacts,
                                                    Map<LocalDate, List<Task>> tasksByDate,
                                                    List<Note> notes,
+                                                   List<NoteFolder> noteFolders,
                                                    LocalDate selectedDate,
                                                    String calendarViewMode,
                                                    double calendarZoom) {
@@ -47,10 +55,25 @@ public record CrmDataSnapshot(
                 .map(note -> new Note(note.getId(), note.getTitle(), note.getContent(),
                         note.getFormat(), note.getLinkedTaskId(), note.getFontFamily(),
                         note.getFontSize(), note.getFontWeight(), note.isItalic(),
-                        note.getPreviewFontFamily(), note.getPreviewFontSize(), note.getPreviewTextColor()))
+                        note.getPreviewFontFamily(), note.getPreviewFontSize(), note.getPreviewTextColor(),
+                        note.getFolderId()))
+                .toList();
+
+        List<NoteFolder> copiedFolders = noteFolders.stream()
+                .map(folder -> new NoteFolder(folder.getId(), folder.getName()))
                 .toList();
 
         return new CrmDataSnapshot(List.copyOf(copiedContacts), Map.copyOf(copiedTasks), List.copyOf(copiedNotes),
+                List.copyOf(copiedFolders), selectedDate, calendarViewMode, calendarZoom);
+    }
+
+    public static CrmDataSnapshot detachedCopyOf(List<Contact> contacts,
+                                                  Map<LocalDate, List<Task>> tasksByDate,
+                                                  List<Note> notes,
+                                                  LocalDate selectedDate,
+                                                  String calendarViewMode,
+                                                  double calendarZoom) {
+        return detachedCopyOf(contacts, tasksByDate, notes, List.of(),
                 selectedDate, calendarViewMode, calendarZoom);
     }
 
@@ -59,6 +82,6 @@ public record CrmDataSnapshot(
                                                   LocalDate selectedDate,
                                                   String calendarViewMode,
                                                   double calendarZoom) {
-        return detachedCopyOf(contacts, tasksByDate, List.of(), selectedDate, calendarViewMode, calendarZoom);
+        return detachedCopyOf(contacts, tasksByDate, List.of(), List.of(), selectedDate, calendarViewMode, calendarZoom);
     }
 }

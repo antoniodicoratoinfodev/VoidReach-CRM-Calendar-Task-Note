@@ -360,16 +360,26 @@
                 <VBox fx:id="notesView" visible="false" styleClass="notes-view" VBox.vgrow="ALWAYS">
                     <StackPane VBox.vgrow="ALWAYS">
                         <VBox fx:id="notesLibraryPane" spacing="18" styleClass="content-area, notes-library">
-                            <HBox alignment="BOTTOM_LEFT">
+                            <HBox alignment="BOTTOM_LEFT" spacing="10">
                                 <VBox spacing="5">
                                     <Label text="KNOWLEDGE" styleClass="page-eyebrow"/>
                                     <Label text="Notes" styleClass="section-title"/>
                                     <Label text="Capture ideas, plans, and context connected to your work." styleClass="section-subtitle"/>
                                 </VBox>
                                 <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="Add folder" onAction="#handleAddNoteFolder" styleClass="btn-secondary, add-folder-button">
+                                    <graphic><FontIcon iconLiteral="fas-folder-plus" iconSize="13" styleClass="toolbar-icon"/></graphic>
+                                </Button>
                                 <Button text="New note" onAction="#handleAddNote" styleClass="btn-primary">
                                     <graphic><FontIcon iconLiteral="fas-plus" iconSize="13" styleClass="button-icon-light"/></graphic>
                                 </Button>
+                            </HBox>
+                            <HBox fx:id="notesBreadcrumbBar" spacing="8" alignment="CENTER_LEFT" styleClass="notes-breadcrumb-bar">
+                                <Button fx:id="notesBackButton" onAction="#handleOpenNotesRoot" visible="false" managed="false" styleClass="icon-button, note-folder-back">
+                                    <graphic><FontIcon iconLiteral="fas-arrow-left" iconSize="11" styleClass="toolbar-icon"/></graphic>
+                                </Button>
+                                <FontIcon iconLiteral="fas-folder-open" iconSize="13" styleClass="note-folder-location-icon"/>
+                                <Label fx:id="notesLocationLabel" text="All notes" styleClass="notes-location-label"/>
                             </HBox>
                             <HBox spacing="10" alignment="CENTER_LEFT" styleClass="toolbar-card">
                                 <TextField fx:id="notesSearchField" promptText="Search notes…" styleClass="search-bar" HBox.hgrow="ALWAYS"/>
@@ -389,6 +399,7 @@
                                 </Button>
                                 <TextField fx:id="noteTitleField" promptText="Untitled note" styleClass="note-title-field" HBox.hgrow="ALWAYS"/>
                                 <Label fx:id="noteFormatLabel" text=".txt" styleClass="note-format-badge"/>
+                                <ComboBox fx:id="noteFolderCombo" promptText="Folder" prefWidth="180" styleClass="note-folder-combo"/>
                                 <ComboBox fx:id="noteTaskCombo" promptText="Link a task" prefWidth="230" styleClass="note-task-combo"/>
                                 <Button fx:id="noteOpenTaskButton" text="Open task" onAction="#handleOpenLinkedTask" styleClass="btn-secondary, note-open-task"/>
                                 <Button text="Delete" onAction="#handleDeleteNote" styleClass="btn-secondary, danger-button"/>

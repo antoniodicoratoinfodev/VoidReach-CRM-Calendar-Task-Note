@@ -3,6 +3,7 @@ package com.crm.repository;
 import com.crm.model.Contact;
 import com.crm.model.CrmDataSnapshot;
 import com.crm.model.Note;
+import com.crm.model.NoteFolder;
 import com.crm.model.NoteFormat;
 import com.crm.model.Task;
 import com.crm.repository.CorruptRecordQuarantine.RejectedRecord;
@@ -36,6 +37,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
         List<Contact> contacts = new ArrayList<>();
         Map<LocalDate, List<Task>> tasks = new HashMap<>();
         List<Note> notes = new ArrayList<>();
+        List<NoteFolder> noteFolders = new ArrayList<>();
 
         for (int index : recordIndexes(properties, "contact.", "contacts.count", rejected)) {
             String prefix = "contact." + index + ".";
@@ -64,6 +66,17 @@ public class LocalCrmDataRepository implements CrmDataRepository {
             }
         }
 
+        for (int index : recordIndexes(properties, "noteFolder.", "noteFolders.count", rejected)) {
+            String prefix = "noteFolder." + index + ".";
+            try {
+                noteFolders.add(new NoteFolder(
+                        requiredNonBlank(properties, prefix + "id"),
+                        requiredNonBlank(properties, prefix + "name")));
+            } catch (RuntimeException failure) {
+                rejected.add(CorruptRecordQuarantine.capture(properties, "noteFolder", String.valueOf(index), prefix, failure));
+            }
+        }
+
         for (int index : recordIndexes(properties, "note.", "notes.count", rejected)) {
             String prefix = "note." + index + ".";
             try {
@@ -79,7 +92,8 @@ public class LocalCrmDataRepository implements CrmDataRepository {
                         Boolean.parseBoolean(optionalValue(properties, prefix + "italic", "false")),
                         optionalValue(properties, prefix + "previewFontFamily", Note.DEFAULT_PREVIEW_FONT_FAMILY),
                         optionalDouble(properties, prefix + "previewFontSize", Note.DEFAULT_PREVIEW_FONT_SIZE),
-                        optionalValue(properties, prefix + "previewTextColor", "")));
+                        optionalValue(properties, prefix + "previewTextColor", ""),
+                        optionalValue(properties, prefix + "folderId", "")));
             } catch (RuntimeException failure) {
                 rejected.add(CorruptRecordQuarantine.capture(properties, "note", String.valueOf(index), prefix, failure));
             }
@@ -97,7 +111,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
         }, rejected);
 
         CorruptRecordQuarantine.writeBestEffort(file, rejected);
-        return new CrmDataSnapshot(contacts, tasks, notes, selectedDate, viewMode, zoom);
+        return new CrmDataSnapshot(contacts, tasks, notes, noteFolders, selectedDate, viewMode, zoom);
     }
 
     @Override public synchronized void saveForUser(String userId, CrmDataSnapshot data) {
@@ -164,6 +178,14 @@ public class LocalCrmDataRepository implements CrmDataRepository {
             put(properties, prefix + "previewFontFamily", note.getPreviewFontFamily());
             put(properties, prefix + "previewFontSize", String.valueOf(note.getPreviewFontSize()));
             put(properties, prefix + "previewTextColor", note.getPreviewTextColor());
+            put(properties, prefix + "folderId", note.getFolderId());
+        }
+        properties.setProperty("noteFolders.count", String.valueOf(data.noteFolders().size()));
+        for (int i = 0; i < data.noteFolders().size(); i++) {
+            NoteFolder folder = data.noteFolders().get(i);
+            String prefix = "noteFolder." + i + ".";
+            put(properties, prefix + "id", folder.getId());
+            put(properties, prefix + "name", folder.getName());
         }
         put(properties, "calendar.selectedDate", data.selectedDate().toString());
         put(properties, "calendar.viewMode", data.calendarViewMode());
@@ -225,6 +247,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
                     properties -> properties.containsKey("contacts.count")
                             || properties.containsKey("tasks.count")
                             || properties.containsKey("notes.count")
+                            || properties.containsKey("noteFolders.count")
                             || properties.containsKey("calendar.selectedDate"));
         } catch (IOException e) {
             throw new IllegalStateException("Local data could not be read", e);
