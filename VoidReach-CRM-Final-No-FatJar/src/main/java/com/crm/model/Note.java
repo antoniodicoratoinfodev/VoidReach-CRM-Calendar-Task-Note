@@ -1,5 +1,8 @@
 package com.crm.model;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -13,7 +16,7 @@ public final class Note {
     private final NoteFormat format;
     private String title;
     private String content;
-    private String linkedTaskId;
+    private final LinkedHashSet<String> linkedTaskIds = new LinkedHashSet<>();
     private String fontFamily;
     private double fontSize;
     private int fontWeight;
@@ -48,11 +51,20 @@ public final class Note {
     public Note(String id, String title, String content, NoteFormat format, String linkedTaskId,
                 String fontFamily, double fontSize, int fontWeight, boolean italic,
                 String previewFontFamily, double previewFontSize, String previewTextColor, String folderId) {
+        this(id, title, content, format, linkedTaskId == null || linkedTaskId.isBlank()
+                        ? List.of() : List.of(linkedTaskId),
+                fontFamily, fontSize, fontWeight, italic,
+                previewFontFamily, previewFontSize, previewTextColor, folderId);
+    }
+
+    public Note(String id, String title, String content, NoteFormat format, Collection<String> linkedTaskIds,
+                String fontFamily, double fontSize, int fontWeight, boolean italic,
+                String previewFontFamily, double previewFontSize, String previewTextColor, String folderId) {
         this.id = requireId(id);
         this.title = safe(title);
         this.content = safe(content);
         this.format = Objects.requireNonNull(format);
-        this.linkedTaskId = safe(linkedTaskId);
+        setLinkedTaskIds(linkedTaskIds);
         setFontFamily(fontFamily);
         setFontSize(fontSize);
         setFontWeight(fontWeight);
@@ -69,8 +81,25 @@ public final class Note {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = safe(content); }
     public NoteFormat getFormat() { return format; }
-    public String getLinkedTaskId() { return linkedTaskId; }
-    public void setLinkedTaskId(String linkedTaskId) { this.linkedTaskId = safe(linkedTaskId); }
+    /** Compatibility accessor for older callers that expected at most one linked task. */
+    public String getLinkedTaskId() { return linkedTaskIds.stream().findFirst().orElse(""); }
+    /** Compatibility mutator: replaces every link with the supplied task, or clears all links. */
+    public void setLinkedTaskId(String linkedTaskId) {
+        setLinkedTaskIds(linkedTaskId == null || linkedTaskId.isBlank() ? List.of() : List.of(linkedTaskId));
+    }
+    public List<String> getLinkedTaskIds() { return List.copyOf(linkedTaskIds); }
+    public void setLinkedTaskIds(Collection<String> taskIds) {
+        linkedTaskIds.clear();
+        if (taskIds == null) return;
+        taskIds.stream().map(Note::safe).map(String::trim).filter(value -> !value.isEmpty())
+                .forEach(linkedTaskIds::add);
+    }
+    public boolean isLinkedToTask(String taskId) { return taskId != null && linkedTaskIds.contains(taskId); }
+    public void linkTask(String taskId) {
+        String value = safe(taskId).trim();
+        if (!value.isEmpty()) linkedTaskIds.add(value);
+    }
+    public void unlinkTask(String taskId) { linkedTaskIds.remove(safe(taskId).trim()); }
     public String getFontFamily() { return fontFamily; }
     public void setFontFamily(String fontFamily) {
         this.fontFamily = fontFamily == null || fontFamily.isBlank() ? DEFAULT_FONT_FAMILY : fontFamily.trim();

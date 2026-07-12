@@ -46,7 +46,6 @@ import java.util.regex.Pattern;
 /** Owns the notes library, full-size editor, ordering, Markdown preview, and task links. */
 public final class NotesController {
     private static final DataFormat NOTE_ID = new DataFormat("application/x-voidreach-note-id");
-    private static final TaskOption NO_TASK = new TaskOption(null, null);
     private static final FolderOption ROOT_FOLDER = new FolderOption(null, "All notes");
     private static final List<Double> FONT_SIZES = List.of(
             12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0, 28.0, 32.0, 36.0, 40.0, 48.0);
@@ -69,7 +68,7 @@ public final class NotesController {
     private final HBox breadcrumbItems;
     private final ComboBox<FolderOption> folderCombo;
     private final ComboBox<TaskOption> taskCombo;
-    private final Button openTaskButton;
+    private final MenuButton openTaskButton;
     private final HBox markdownToolbar;
     private final ToggleButton previewToggle;
     private final ComboBox<String> fontFamilyCombo;
@@ -99,7 +98,7 @@ public final class NotesController {
                            Label emptyLabel, Label countLabel, TextField titleField, Label formatLabel,
                            Button backButton, ScrollPane breadcrumbScroll, HBox breadcrumbItems,
                            ComboBox<FolderOption> folderCombo,
-                           ComboBox<TaskOption> taskCombo, Button openTaskButton, HBox markdownToolbar,
+                           ComboBox<TaskOption> taskCombo, MenuButton openTaskButton, HBox markdownToolbar,
                            ToggleButton previewToggle, ComboBox<String> fontFamilyCombo,
                            ComboBox<Double> fontSizeCombo, ComboBox<String> fontWeightCombo,
                            ToggleButton boldToggle, ToggleButton italicToggle,
@@ -168,8 +167,9 @@ public final class NotesController {
         highlightDebounce.setOnFinished(event -> applySyntaxHighlighting());
         taskCombo.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (updatingEditor || currentNote == null) return;
-            currentNote.setLinkedTaskId(newValue == null || newValue.task() == null ? "" : newValue.task().getId());
-            updateOpenTaskButton();
+            if (newValue == null || newValue.task() == null) return;
+            currentNote.linkTask(newValue.task().getId());
+            refreshTaskChoices();
             changed();
         });
         folderCombo.valueProperty().addListener((observable, oldValue, newValue) -> {
@@ -238,7 +238,7 @@ public final class NotesController {
 
     public List<Note> notesForTask(String taskId) {
         if (taskId == null || taskId.isBlank()) return List.of();
-        return notes.stream().filter(note -> taskId.equals(note.getLinkedTaskId())).toList();
+        return notes.stream().filter(note -> note.isLinkedToTask(taskId)).toList();
     }
 
     public void createNote() {
@@ -318,8 +318,8 @@ public final class NotesController {
     }
 
     public void openLinkedTask() {
-        TaskOption selected = taskCombo.getValue();
-        if (selected != null && selected.task() != null) actions.openTask(selected.date(), selected.task());
+        currentNote.getLinkedTaskIds().stream().map(this::findTask).flatMap(Optional::stream)
+                .findFirst().ifPresent(selected -> actions.openTask(selected.date(), selected.task()));
     }
 
     public void togglePreview() {
@@ -562,7 +562,7 @@ public final class NotesController {
         excerpt.getStyleClass().add("note-card-excerpt");
         Label link = new Label(linkedTaskCaption(note));
         link.getStyleClass().add("note-card-link");
-        link.setVisible(!note.getLinkedTaskId().isBlank());
+        link.setVisible(!note.getLinkedTaskIds().isEmpty());
         link.setManaged(link.isVisible());
         VBox card = new VBox(10, top, title, excerpt, link);
         card.getStyleClass().add("note-card");
@@ -807,20 +807,34 @@ public final class NotesController {
 
     private void refreshTaskChoices() {
         List<TaskOption> options = new ArrayList<>();
-        options.add(NO_TASK);
-        tasksByDate.forEach((date, tasks) -> tasks.forEach(task -> options.add(new TaskOption(date, task))));
-        options.subList(1, options.size()).sort(Comparator.comparing(TaskOption::date)
+        tasksByDate.forEach((date, tasks) -> tasks.stream()
+                .filter(task -> !currentNote.isLinkedToTask(task.getId()))
+                .forEach(task -> options.add(new TaskOption(date, task))));
+        options.sort(Comparator.comparing(TaskOption::date)
                 .thenComparingInt(option -> option.task().getStartMin()));
         taskCombo.setItems(FXCollections.observableArrayList(options));
-        TaskOption selected = options.stream().filter(option -> option.task() != null
-                && option.task().getId().equals(currentNote.getLinkedTaskId())).findFirst().orElse(NO_TASK);
-        taskCombo.setValue(selected);
+        taskCombo.setValue(null);
         updateOpenTaskButton();
     }
 
     private void updateOpenTaskButton() {
-        TaskOption selected = taskCombo.getValue();
-        boolean available = selected != null && selected.task() != null;
+        List<TaskOption> linked = currentNote.getLinkedTaskIds().stream()
+                .map(this::findTask).flatMap(Optional::stream).toList();
+        openTaskButton.getItems().clear();
+        linked.forEach(option -> {
+            MenuItem open = new MenuItem("Open · " + option);
+            open.setOnAction(event -> actions.openTask(option.date(), option.task()));
+            MenuItem unlink = new MenuItem("Unlink · " + option.task().getTitle());
+            unlink.setOnAction(event -> {
+                currentNote.unlinkTask(option.task().getId());
+                refreshTaskChoices();
+                changed();
+            });
+            openTaskButton.getItems().addAll(open, unlink, new SeparatorMenuItem());
+        });
+        if (!openTaskButton.getItems().isEmpty()) openTaskButton.getItems().removeLast();
+        boolean available = !linked.isEmpty();
+        openTaskButton.setText(linked.size() + (linked.size() == 1 ? " linked task" : " linked tasks"));
         openTaskButton.setVisible(available);
         openTaskButton.setManaged(available);
     }
@@ -1250,7 +1264,11 @@ public final class NotesController {
     }
 
     private String linkedTaskCaption(Note note) {
-        return findTask(note.getLinkedTaskId()).map(option -> "Linked to: " + option.task().getTitle()).orElse("Linked task unavailable");
+        List<String> titles = note.getLinkedTaskIds().stream().map(this::findTask).flatMap(Optional::stream)
+                .map(option -> option.task().getTitle()).toList();
+        if (titles.isEmpty()) return "Linked tasks unavailable";
+        return "Linked to " + titles.size() + (titles.size() == 1 ? " task: " : " tasks: ")
+                + String.join(", ", titles);
     }
 
     private Optional<TaskOption> findTask(String taskId) {
@@ -1264,7 +1282,6 @@ public final class NotesController {
 
     public record TaskOption(LocalDate date, Task task) {
         @Override public String toString() {
-            if (task == null) return "No linked task";
             return date.format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH)) + " · " + task.getTitle();
         }
     }

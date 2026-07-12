@@ -76,6 +76,7 @@ class LocalCrmDataRepositoryTest {
         Note markdown = new Note("note-md", "Release plan", "# Plan\n\n- [ ] Ship\n[[Research]] ✨",
                 NoteFormat.MARKDOWN, task.getId(), "Georgia", 22, 700, true,
                 "Arial", 26, "#224466", projects.getId());
+        markdown.linkTask("task-review");
         Note text = new Note("note-txt", "Research", "Plain text\nwith multiple lines",
                 NoteFormat.TEXT, "");
 
@@ -88,7 +89,7 @@ class LocalCrmDataRepositoryTest {
         assertEquals(List.of("note-md", "note-txt"), loaded.notes().stream().map(Note::getId).toList());
         assertEquals(NoteFormat.MARKDOWN, loaded.notes().getFirst().getFormat());
         assertEquals("# Plan\n\n- [ ] Ship\n[[Research]] ✨", loaded.notes().getFirst().getContent());
-        assertEquals("task-linked", loaded.notes().getFirst().getLinkedTaskId());
+        assertEquals(List.of("task-linked", "task-review"), loaded.notes().getFirst().getLinkedTaskIds());
         assertEquals("Georgia", loaded.notes().getFirst().getFontFamily());
         assertEquals(22, loaded.notes().getFirst().getFontSize());
         assertEquals(700, loaded.notes().getFirst().getFontWeight());
@@ -104,6 +105,23 @@ class LocalCrmDataRepositoryTest {
         assertEquals(NoteFormat.TEXT, loaded.notes().get(1).getFormat());
         assertEquals(Note.DEFAULT_FONT_SIZE, loaded.notes().get(1).getFontSize());
         assertEquals("", loaded.notes().get(1).getFolderId());
+    }
+
+    @Test void loadsTheLegacySingleTaskLinkWhenTheNewLinkListIsAbsent() throws Exception {
+        LocalCrmDataRepository repository = new LocalCrmDataRepository(directory);
+        Note note = new Note("note-legacy", "Legacy", "", NoteFormat.TEXT, "task-old");
+        LocalDate date = LocalDate.of(2026, 7, 13);
+        repository.saveForUser("legacy-links", new CrmDataSnapshot(
+                List.of(), Map.of(), List.of(note), date, "Day", 1.0));
+
+        Path file = directory.resolve("legacy-links.properties");
+        Properties stored = load(file);
+        stored.remove("note.0.linkedTaskIds.count");
+        stored.remove("note.0.linkedTaskIds.0");
+        storeDirectly(file, stored);
+
+        assertEquals(List.of("task-old"),
+                repository.loadForUser("legacy-links").notes().getFirst().getLinkedTaskIds());
     }
 
     private static Properties load(Path file) throws Exception {

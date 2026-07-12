@@ -174,8 +174,15 @@ public final class TasksController {
         delete.setOnAction(event -> confirmDelete(entry));
         HBox controls = new HBox(6);
         List<Note> linkedNotes = actions.linkedNotes(task.getId());
-        if (!linkedNotes.isEmpty()) {
-            MenuButton note = new MenuButton(linkedNotes.size() == 1 ? "Note" : linkedNotes.size() + " notes");
+        if (linkedNotes.size() == 1) {
+            Note linked = linkedNotes.getFirst();
+            Button note = new Button("Open note");
+            note.getStyleClass().addAll("task-row-button", "task-note-link");
+            note.setOnAction(event -> actions.openNote(linked.getId()));
+            note.setTooltip(new Tooltip("Open the linked note"));
+            controls.getChildren().add(note);
+        } else if (linkedNotes.size() > 1) {
+            MenuButton note = new MenuButton(linkedNotes.size() + " notes");
             note.getStyleClass().addAll("task-row-button", "task-note-link");
             linkedNotes.forEach(linked -> {
                 MenuItem item = new MenuItem(linked.getTitle().isBlank() ? "Untitled note" : linked.getTitle());

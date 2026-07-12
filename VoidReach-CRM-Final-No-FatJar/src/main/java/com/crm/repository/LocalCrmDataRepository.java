@@ -86,7 +86,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
                         optionalValue(properties, prefix + "title", ""),
                         optionalValue(properties, prefix + "content", ""),
                         NoteFormat.valueOf(optionalValue(properties, prefix + "format", "TEXT")),
-                        optionalValue(properties, prefix + "linkedTaskId", ""),
+                        readLinkedTaskIds(properties, prefix),
                         optionalValue(properties, prefix + "fontFamily", Note.DEFAULT_FONT_FAMILY),
                         optionalDouble(properties, prefix + "fontSize", Note.DEFAULT_FONT_SIZE),
                         optionalInteger(properties, prefix + "fontWeight", Note.DEFAULT_FONT_WEIGHT),
@@ -172,6 +172,10 @@ public class LocalCrmDataRepository implements CrmDataRepository {
             put(properties, prefix + "content", note.getContent());
             put(properties, prefix + "format", note.getFormat().name());
             put(properties, prefix + "linkedTaskId", note.getLinkedTaskId());
+            properties.setProperty(prefix + "linkedTaskIds.count", String.valueOf(note.getLinkedTaskIds().size()));
+            for (int linkIndex = 0; linkIndex < note.getLinkedTaskIds().size(); linkIndex++) {
+                put(properties, prefix + "linkedTaskIds." + linkIndex, note.getLinkedTaskIds().get(linkIndex));
+            }
             put(properties, prefix + "fontFamily", note.getFontFamily());
             put(properties, prefix + "fontSize", String.valueOf(note.getFontSize()));
             put(properties, prefix + "fontWeight", String.valueOf(note.getFontWeight()));
@@ -206,6 +210,22 @@ public class LocalCrmDataRepository implements CrmDataRepository {
                 optionalValue(properties, prefix + "lastInteraction", ""),
                 optionalValue(properties, prefix + "tags", ""),
                 optionalValue(properties, prefix + "description", ""));
+    }
+
+    private List<String> readLinkedTaskIds(Properties properties, String prefix) {
+        String countValue = properties.getProperty(prefix + "linkedTaskIds.count");
+        if (countValue == null) {
+            String legacyId = optionalValue(properties, prefix + "linkedTaskId", "").trim();
+            return legacyId.isEmpty() ? List.of() : List.of(legacyId);
+        }
+        int count = flexibleInteger(countValue, prefix + "linkedTaskIds.count");
+        if (count < 0 || count > MAX_RECORDS) throw new IllegalArgumentException("Linked task count is out of range");
+        List<String> taskIds = new ArrayList<>(count);
+        for (int index = 0; index < count; index++) {
+            String taskId = requiredNonBlank(properties, prefix + "linkedTaskIds." + index);
+            taskIds.add(taskId);
+        }
+        return taskIds;
     }
 
     private SortedSet<Integer> recordIndexes(Properties properties, String prefix, String countKey, List<RejectedRecord> rejected) {

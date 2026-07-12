@@ -403,8 +403,8 @@
                                 <TextField fx:id="noteTitleField" promptText="Untitled note" styleClass="note-title-field" HBox.hgrow="ALWAYS"/>
                                 <Label fx:id="noteFormatLabel" text=".txt" styleClass="note-format-badge"/>
                                 <ComboBox fx:id="noteFolderCombo" promptText="Folder" prefWidth="180" styleClass="note-folder-combo"/>
-                                <ComboBox fx:id="noteTaskCombo" promptText="Link a task" prefWidth="230" styleClass="note-task-combo"/>
-                                <Button fx:id="noteOpenTaskButton" text="Open task" onAction="#handleOpenLinkedTask" styleClass="btn-secondary, note-open-task"/>
+                                <ComboBox fx:id="noteTaskCombo" promptText="Link another task" prefWidth="230" styleClass="note-task-combo"/>
+                                <MenuButton fx:id="noteOpenTaskButton" text="Linked tasks" styleClass="btn-secondary, note-open-task"/>
                                 <Button text="Delete" onAction="#handleDeleteNote" styleClass="btn-secondary, danger-button"/>
                             </HBox>
                             <HBox spacing="7" alignment="CENTER_LEFT" styleClass="note-typography-toolbar">

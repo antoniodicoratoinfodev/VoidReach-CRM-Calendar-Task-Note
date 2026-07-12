@@ -108,7 +108,7 @@ public final class MainController {
     @FXML private Label noteFormatLabel;
     @FXML private ComboBox<NotesController.FolderOption> noteFolderCombo;
     @FXML private ComboBox<NotesController.TaskOption> noteTaskCombo;
-    @FXML private Button noteOpenTaskButton;
+    @FXML private MenuButton noteOpenTaskButton;
     @FXML private HBox markdownToolbar;
     @FXML private ComboBox<String> noteFontFamilyCombo;
     @FXML private ComboBox<Double> noteFontSizeCombo;

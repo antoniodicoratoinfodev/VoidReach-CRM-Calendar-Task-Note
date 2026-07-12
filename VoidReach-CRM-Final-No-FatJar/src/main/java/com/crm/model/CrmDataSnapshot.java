@@ -53,7 +53,7 @@ public record CrmDataSnapshot(
 
         List<Note> copiedNotes = notes.stream()
                 .map(note -> new Note(note.getId(), note.getTitle(), note.getContent(),
-                        note.getFormat(), note.getLinkedTaskId(), note.getFontFamily(),
+                        note.getFormat(), note.getLinkedTaskIds(), note.getFontFamily(),
                         note.getFontSize(), note.getFontWeight(), note.isItalic(),
                         note.getPreviewFontFamily(), note.getPreviewFontSize(), note.getPreviewTextColor(),
                         note.getFolderId()))

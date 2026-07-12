@@ -85,7 +85,7 @@ Dashboard values update whenever contacts or tasks change.
 - Day and Week views over a 24-hour timeline.
 - Fifteen-minute visual intervals.
 - Create a task from the calendar timeline.
-- Open the task editor with a double-click or right-click.
+- Open the task editor with a single left-click, double-click, or right-click.
 - Edit title, date, start time, end time, color, and description.
 - Move tasks vertically to change their time.
 - Move tasks horizontally between days in Week view.
@@ -100,7 +100,7 @@ Dashboard values update whenever contacts or tasks change.
 - `Ctrl+0`/`Cmd+0` restores 100% zoom while the pointer is over the calendar.
 - Selected date, Day/Week mode, and zoom level are restored from the saved workspace.
 
-Tasks linked to notes display a compact note menu directly on calendar entries, in the agenda, and in the task-edit dialog.
+Tasks with one linked note display an **Open note** control directly on calendar entries and in the agenda; selecting it opens that note's editor in the Notes section. Tasks with multiple linked notes display a compact choice menu. Linked notes are also available in the task-edit dialog.
 
 ### Tasks
 
@@ -204,12 +204,13 @@ The highlighter is language-agnostic and designed for common Java, JavaScript, P
 
 #### Linking Notes and Tasks
 
-- A note can be linked to a calendar task from the note editor.
-- A note can also be attached from the task dialog.
-- A task may have multiple linked notes.
-- Open the linked task directly from its note.
+- Notes and tasks use a many-to-many relationship: every note can link to multiple tasks and every task can link to multiple notes.
+- Add multiple task links from the note editor; its linked-task menu shows the current count and provides separate Open and Unlink actions.
+- Select or clear multiple note links directly in the task dialog.
+- The task dialog displays every currently linked note as an individual button that opens its editor in the Notes section.
+- Note cards summarize all available linked tasks.
 - Open linked notes from Tasks, Calendar entries, the calendar agenda, or the task dialog.
-- Deleting a task safely unlinks its notes without deleting the notes themselves.
+- Deleting a task removes only that task's links without deleting notes or affecting their links to other tasks.
 
 ### Agenda Sidebar
 
@@ -249,7 +250,7 @@ The last selected theme is stored per account and restored when that account ope
 | Contacts | Click a column label to rename it |
 | Contacts | Drag a column header to reorder it |
 | Contacts | `Ctrl+C` / `Cmd+C` copies selected contacts |
-| Calendar | Double-click or right-click a task to edit |
+| Calendar | Click a task to edit |
 | Calendar | Drag a task to reschedule it |
 | Calendar | Drag the lower edge to change duration |
 | Calendar | `Ctrl` / `Cmd` + mouse wheel changes zoom |
