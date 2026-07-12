@@ -52,10 +52,11 @@ public class LocalUserRepository implements UserRepository {
         put(properties, prefix + "resetCodeHash", user.getResetCodeHash());
         put(properties, prefix + "resetCodeExpiresAt", user.getResetCodeExpiresAt() == null ? null : user.getResetCodeExpiresAt().toString());
         put(properties, prefix + "avatarFileName", user.getAvatarFileName());
+        put(properties, prefix + "preferredTheme", user.getPreferredTheme());
         try {
             AtomicPropertiesStore.store(file, properties, "VoidReach CRM local users");
         } catch (IOException e) {
-            throw new IllegalStateException("Impossibile salvare gli account locali", e);
+            throw new IllegalStateException("Local accounts could not be saved", e);
         }
     }
 
@@ -99,6 +100,8 @@ public class LocalUserRepository implements UserRepository {
         String expires = optionalValue(properties, prefix + "resetCodeExpiresAt");
         if (expires != null && !expires.isBlank()) user.setResetCodeExpiresAt(Instant.parse(expires));
         user.setAvatarFileName(optionalValue(properties, prefix + "avatarFileName"));
+        String preferredTheme = optionalValue(properties, prefix + "preferredTheme");
+        if (preferredTheme != null && !preferredTheme.isBlank()) user.setPreferredTheme(preferredTheme);
         return user;
     }
 
@@ -108,13 +111,13 @@ public class LocalUserRepository implements UserRepository {
                     properties -> properties.stringPropertyNames().stream()
                             .anyMatch(key -> key.startsWith("user.") && key.endsWith(".email")));
         } catch (IOException e) {
-            throw new IllegalStateException("Impossibile leggere gli account locali", e);
+            throw new IllegalStateException("Local accounts could not be read", e);
         }
     }
 
     private String requiredNonBlank(Properties properties, String key) {
         String value = optionalValue(properties, key);
-        if (value == null || value.isBlank()) throw new IllegalArgumentException("Proprietà obbligatoria non valida: " + key);
+        if (value == null || value.isBlank()) throw new IllegalArgumentException("Invalid required property: " + key);
         return value;
     }
 
@@ -124,7 +127,7 @@ public class LocalUserRepository implements UserRepository {
         try {
             return new String(Base64.getDecoder().decode(rawValue), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Base64 non valido: " + key, e);
+            throw new IllegalArgumentException("Invalid Base64: " + key, e);
         }
     }
 

@@ -11,6 +11,7 @@ public class Task {
     private int startMin;
     private int duration;
     private String color;
+    private boolean completed;
     private final String id;
 
     public Task(String title, String description, int startMin, int duration, String color) {
@@ -18,6 +19,11 @@ public class Task {
     }
 
     public Task(String id, String title, String description, int startMin, int duration, String color) {
+        this(id, title, description, startMin, duration, color, false);
+    }
+
+    public Task(String id, String title, String description, int startMin, int duration, String color,
+                boolean completed) {
         validateSchedule(startMin, duration);
         this.id = id;
         this.title = title;
@@ -25,6 +31,7 @@ public class Task {
         this.startMin = startMin;
         this.duration = duration;
         this.color = color;
+        this.completed = completed;
     }
 
     public String getTitle() { return title; }
@@ -44,17 +51,19 @@ public class Task {
     }
 
     public String getColor() { return color; }
+    public boolean isCompleted() { return completed; }
+    public void setCompleted(boolean completed) { this.completed = completed; }
     public String getId() { return id; }
 
     public static void validateSchedule(int startMin, int duration) {
         if (startMin < 0 || startMin >= MINUTES_PER_DAY) {
-            throw new IllegalArgumentException("L'orario di inizio deve essere compreso tra 00:00 e 23:59.");
+            throw new IllegalArgumentException("The start time must be between 00:00 and 23:59.");
         }
         if (duration < MIN_DURATION_MINUTES) {
-            throw new IllegalArgumentException("Un'attività deve durare almeno 5 minuti.");
+            throw new IllegalArgumentException("A task must last at least 5 minutes.");
         }
         if (duration > MINUTES_PER_DAY - startMin) {
-            throw new IllegalArgumentException("Un'attività non può terminare dopo le 24:00.");
+            throw new IllegalArgumentException("A task cannot end after 24:00.");
         }
     }
 }

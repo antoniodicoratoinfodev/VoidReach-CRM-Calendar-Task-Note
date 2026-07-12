@@ -53,7 +53,8 @@ public class LocalCrmDataRepository implements CrmDataRepository {
                         optionalValue(properties, prefix + "description", ""),
                         requiredInteger(properties, prefix + "startMin"),
                         requiredInteger(properties, prefix + "duration"),
-                        optionalValue(properties, prefix + "color", "Blue"));
+                        optionalValue(properties, prefix + "color", "Blue"),
+                        Boolean.parseBoolean(optionalValue(properties, prefix + "completed", "false")));
                 tasks.computeIfAbsent(date, ignored -> new ArrayList<>()).add(task);
             } catch (RuntimeException failure) {
                 rejected.add(CorruptRecordQuarantine.capture(properties, "task", String.valueOf(index), prefix, failure));
@@ -62,12 +63,12 @@ public class LocalCrmDataRepository implements CrmDataRepository {
 
         LocalDate selectedDate = preference(properties, "calendar.selectedDate", LocalDate.now(), LocalDate::parse, rejected);
         String viewMode = preference(properties, "calendar.viewMode", "Day", value -> {
-            if (!"Day".equals(value) && !"Week".equals(value)) throw new IllegalArgumentException("Modalità calendario non valida");
+            if (!"Day".equals(value) && !"Week".equals(value)) throw new IllegalArgumentException("Invalid calendar view mode");
             return value;
         }, rejected);
         double zoom = preference(properties, "calendar.zoom", 1.0, value -> {
             double parsed = Double.parseDouble(value);
-            if (!Double.isFinite(parsed) || parsed <= 0) throw new IllegalArgumentException("Zoom calendario non valido");
+            if (!Double.isFinite(parsed) || parsed <= 0) throw new IllegalArgumentException("Invalid calendar zoom");
             return parsed;
         }, rejected);
 
@@ -84,7 +85,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
         try {
             AtomicPropertiesStore.store(target, properties, comment);
         } catch (IOException e) {
-            throw new IllegalStateException("Impossibile salvare i dati locali", e);
+            throw new IllegalStateException("Local data could not be saved", e);
         }
     }
 
@@ -121,6 +122,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
             put(properties, prefix + "startMin", String.valueOf(task.getStartMin()));
             put(properties, prefix + "duration", String.valueOf(task.getDuration()));
             put(properties, prefix + "color", task.getColor());
+            put(properties, prefix + "completed", String.valueOf(task.isCompleted()));
         }
         put(properties, "calendar.selectedDate", data.selectedDate().toString());
         put(properties, "calendar.viewMode", data.calendarViewMode());
@@ -158,7 +160,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
         if (rawCount == null && indexes.isEmpty()) return indexes;
         try {
             int count = flexibleInteger(rawCount, countKey);
-            if (count < 0 || count > MAX_RECORDS) throw new IllegalArgumentException("Conteggio fuori intervallo");
+            if (count < 0 || count > MAX_RECORDS) throw new IllegalArgumentException("Count is out of range");
             for (int i = 0; i < count; i++) indexes.add(i);
         } catch (RuntimeException failure) {
             rejected.add(CorruptRecordQuarantine.singleProperty("metadata", countKey, rawCount, failure));
@@ -183,7 +185,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
                             || properties.containsKey("tasks.count")
                             || properties.containsKey("calendar.selectedDate"));
         } catch (IOException e) {
-            throw new IllegalStateException("Impossibile leggere i dati locali", e);
+            throw new IllegalStateException("Local data could not be read", e);
         }
     }
 
@@ -192,7 +194,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
     private int requiredInteger(Properties properties, String key) { return flexibleInteger(properties.getProperty(key), key); }
 
     private int flexibleInteger(String rawValue, String key) {
-        if (rawValue == null) throw new IllegalArgumentException("Proprietà mancante: " + key);
+        if (rawValue == null) throw new IllegalArgumentException("Missing property: " + key);
         try {
             return Integer.parseInt(rawValue);
         } catch (NumberFormatException plainFailure) {
@@ -207,13 +209,13 @@ public class LocalCrmDataRepository implements CrmDataRepository {
 
     private String requiredNonBlank(Properties properties, String key) {
         String value = requiredValue(properties, key);
-        if (value.isBlank()) throw new IllegalArgumentException("Proprietà vuota: " + key);
+        if (value.isBlank()) throw new IllegalArgumentException("Empty property: " + key);
         return value;
     }
 
     private String requiredValue(Properties properties, String key) {
         String rawValue = properties.getProperty(key);
-        if (rawValue == null) throw new IllegalArgumentException("Proprietà mancante: " + key);
+        if (rawValue == null) throw new IllegalArgumentException("Missing property: " + key);
         return decode(rawValue, key);
     }
 
@@ -226,7 +228,7 @@ public class LocalCrmDataRepository implements CrmDataRepository {
         try {
             return new String(Base64.getDecoder().decode(rawValue), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Base64 non valido: " + key, e);
+            throw new IllegalArgumentException("Invalid Base64: " + key, e);
         }
     }
 

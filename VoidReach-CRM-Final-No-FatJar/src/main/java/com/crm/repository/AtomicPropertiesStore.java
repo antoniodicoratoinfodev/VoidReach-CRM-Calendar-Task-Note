@@ -22,7 +22,7 @@ public final class AtomicPropertiesStore {
 
     public static void store(Path target, Properties properties, String comment) throws IOException {
         Path directory = target.getParent();
-        if (directory == null) throw new IOException("Percorso dati non valido: " + target);
+        if (directory == null) throw new IOException("Invalid data path: " + target);
         Files.createDirectories(directory);
 
         Path newFile = Files.createTempFile(directory, target.getFileName().toString() + ".", ".tmp");
@@ -43,13 +43,13 @@ public final class AtomicPropertiesStore {
         } catch (IOException | IllegalArgumentException primaryFailure) {
             Path backup = backupPath(target);
             if (!Files.exists(backup)) {
-                throw new IOException("Il file dati non è leggibile e non esiste una copia di backup: " + target, primaryFailure);
+                throw new IOException("The data file cannot be read and no backup exists: " + target, primaryFailure);
             }
             try {
                 return readAndValidate(backup, expectedType, currentSchema, legacyFormat);
             } catch (IOException | IllegalArgumentException backupFailure) {
                 primaryFailure.addSuppressed(backupFailure);
-                throw new IOException("Il file dati e la sua copia di backup non sono leggibili: " + target, primaryFailure);
+                throw new IOException("Neither the data file nor its backup can be read: " + target, primaryFailure);
             }
         }
     }
@@ -59,21 +59,21 @@ public final class AtomicPropertiesStore {
     private static Properties readAndValidate(Path path, String expectedType, int currentSchema, Predicate<Properties> legacyFormat) throws IOException {
         Properties properties = new Properties();
         try (InputStream input = Files.newInputStream(path)) { properties.load(input); }
-        if (properties.isEmpty()) throw new IOException("Il file dati è vuoto: " + path);
+        if (properties.isEmpty()) throw new IOException("The data file is empty: " + path);
 
         String version = properties.getProperty(SCHEMA_VERSION_KEY);
         if (version == null) {
-            if (!legacyFormat.test(properties)) throw new IOException("Formato dati non riconosciuto: " + path);
-            return properties; // Schema precedente: verrà aggiornato al prossimo salvataggio.
+            if (!legacyFormat.test(properties)) throw new IOException("Unrecognized data format: " + path);
+            return properties; // Legacy schema: it will be updated on the next save.
         }
 
         int schema;
         try { schema = Integer.parseInt(version); }
-        catch (NumberFormatException e) { throw new IOException("Versione schema non valida: " + version, e); }
-        if (schema < 1 || schema > currentSchema) throw new IOException("Versione schema non supportata: " + schema);
+        catch (NumberFormatException e) { throw new IOException("Invalid schema version: " + version, e); }
+        if (schema < 1 || schema > currentSchema) throw new IOException("Unsupported schema version: " + schema);
         String fileType = properties.getProperty(FILE_TYPE_KEY);
         if (fileType == null && legacyFormat.test(properties)) return properties; // Early v1 files did not include a type marker.
-        if (!expectedType.equals(fileType)) throw new IOException("Tipo di file dati non valido: " + path);
+        if (!expectedType.equals(fileType)) throw new IOException("Invalid data file type: " + path);
         return properties;
     }
 

@@ -33,7 +33,7 @@ public record CrmDataSnapshot(
         Map<LocalDate, List<Task>> copiedTasks = new LinkedHashMap<>();
         tasksByDate.forEach((date, tasks) -> copiedTasks.put(date, tasks.stream()
                 .map(task -> new Task(task.getId(), task.getTitle(), task.getDescription(),
-                        task.getStartMin(), task.getDuration(), task.getColor()))
+                        task.getStartMin(), task.getDuration(), task.getColor(), task.isCompleted()))
                 .toList()));
 
         return new CrmDataSnapshot(List.copyOf(copiedContacts), Map.copyOf(copiedTasks),

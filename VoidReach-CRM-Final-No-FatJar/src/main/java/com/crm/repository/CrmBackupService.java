@@ -31,7 +31,7 @@ public final class CrmBackupService implements AutoCloseable {
         this.repository = Objects.requireNonNull(repository);
         this.backupRoot = Objects.requireNonNull(backupRoot);
         if (interval == null || interval.isZero() || interval.isNegative()) {
-            throw new IllegalArgumentException("L'intervallo di backup deve essere positivo");
+            throw new IllegalArgumentException("The backup interval must be positive");
         }
         this.interval = interval;
     }
@@ -63,7 +63,7 @@ public final class CrmBackupService implements AutoCloseable {
             repository.writeSnapshot(target, snapshot, "VoidReach CRM automatic backup for one account");
             pruneOldBackups(accountDirectory);
         } catch (IOException e) {
-            throw new IllegalStateException("Impossibile creare il backup automatico", e);
+            throw new IllegalStateException("The automatic backup could not be created", e);
         }
     }
 

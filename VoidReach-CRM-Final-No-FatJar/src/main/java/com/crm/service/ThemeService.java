@@ -3,8 +3,10 @@ package com.crm.service;
 import javafx.scene.Scene;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Window;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -12,25 +14,63 @@ import java.util.function.Supplier;
 public final class ThemeService {
     private static final String DARK_STYLESHEET = "/css/style-dark.css";
     private static final String LIGHT_STYLESHEET = "/css/style.css";
+    private static final String BLUE_GRAY_STYLESHEET = "/css/style-blue-gray.css";
+
+    public enum Theme {
+        DARK("Dark"),
+        LIGHT("Light"),
+        BLUE_GRAY("Blue-gray");
+
+        private final String displayName;
+
+        Theme(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
+
+        private Theme next() {
+            Theme[] themes = values();
+            return themes[(ordinal() + 1) % themes.length];
+        }
+    }
 
     private final Supplier<Window> ownerSupplier;
-    private boolean darkMode = true;
+    private Theme activeTheme = Theme.DARK;
 
     public ThemeService(Supplier<Window> ownerSupplier) {
         this.ownerSupplier = Objects.requireNonNull(ownerSupplier);
     }
 
     public boolean isDarkMode() {
-        return darkMode;
+        return activeTheme != Theme.LIGHT;
+    }
+
+    public boolean isBlueGrayTheme() {
+        return activeTheme == Theme.BLUE_GRAY;
+    }
+
+    public Theme activeTheme() {
+        return activeTheme;
     }
 
     public void toggle() {
-        darkMode = !darkMode;
+        activeTheme = activeTheme.next();
+    }
+
+    public void restore(String storedTheme) {
+        try {
+            activeTheme = Theme.valueOf(storedTheme);
+        } catch (IllegalArgumentException | NullPointerException ignored) {
+            activeTheme = Theme.DARK;
+        }
     }
 
     public void applyTo(Scene scene) {
         if (scene == null) return;
-        scene.getStylesheets().setAll(stylesheet());
+        scene.getStylesheets().setAll(stylesheets());
     }
 
     public void applyTo(Dialog<?> dialog) {
@@ -38,13 +78,30 @@ public final class ThemeService {
         Window owner = ownerSupplier.get();
         if (owner != null && dialog.getOwner() == null) dialog.initOwner(owner);
         DialogPane pane = dialog.getDialogPane();
-        pane.getStylesheets().setAll(stylesheet());
+        pane.getStylesheets().setAll(stylesheets());
         if (!pane.getStyleClass().contains("dialog-pane")) pane.getStyleClass().add("dialog-pane");
+        applyDialogSceneFill(pane.getScene());
+        pane.sceneProperty().addListener((observable, oldScene, newScene) -> applyDialogSceneFill(newScene));
     }
 
-    private String stylesheet() {
-        return Objects.requireNonNull(
-                ThemeService.class.getResource(darkMode ? DARK_STYLESHEET : LIGHT_STYLESHEET),
-                "Theme stylesheet is missing").toExternalForm();
+    private void applyDialogSceneFill(Scene scene) {
+        if (scene == null) return;
+        scene.setFill(switch (activeTheme) {
+            case LIGHT -> Color.web("#ffffff");
+            case DARK -> Color.web("#111a2c");
+            case BLUE_GRAY -> Color.web("#202d42");
+        });
+    }
+
+    private List<String> stylesheets() {
+        String base = activeTheme == Theme.LIGHT ? LIGHT_STYLESHEET : DARK_STYLESHEET;
+        String baseUrl = stylesheetUrl(base);
+        if (activeTheme != Theme.BLUE_GRAY) return List.of(baseUrl);
+        return List.of(baseUrl, stylesheetUrl(BLUE_GRAY_STYLESHEET));
+    }
+
+    private String stylesheetUrl(String resource) {
+        return Objects.requireNonNull(ThemeService.class.getResource(resource),
+                "Theme stylesheet is missing: " + resource).toExternalForm();
     }
 }

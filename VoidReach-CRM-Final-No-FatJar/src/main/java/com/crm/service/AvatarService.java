@@ -52,7 +52,7 @@ public class AvatarService {
 
     public synchronized void updateAvatar(UserAccount user, Source source, CropSelection selection) {
         if (user == null || user.getId() == null || user.getId().isBlank()) {
-            throw new IllegalArgumentException("Account non valido");
+            throw new IllegalArgumentException("Invalid account");
         }
 
         Path temporary = null;
@@ -68,7 +68,7 @@ public class AvatarService {
             target = avatars.resolve(nextFileName);
             temporary = Files.createTempFile(avatars, safeAccountId + "-", ".png.tmp");
             if (!ImageIO.write(master, "png", temporary.toFile())) {
-                throw new IOException("Encoder PNG non disponibile");
+                throw new IOException("PNG encoder is not available");
             }
             moveAtomically(temporary, target);
             temporary = null;
@@ -98,7 +98,7 @@ public class AvatarService {
                     // The new file is not referenced and can be cleaned up on a later update.
                 }
             }
-            throw new IllegalStateException("Impossibile salvare l'immagine profilo", ex);
+            throw new IllegalStateException("The profile picture could not be saved", ex);
         } finally {
             if (temporary != null) {
                 try {

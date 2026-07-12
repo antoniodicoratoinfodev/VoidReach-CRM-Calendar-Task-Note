@@ -54,7 +54,7 @@ public final class AvatarImageProcessor {
 
     public Source prepareSource(Path path) {
         if (path == null || !Files.isRegularFile(path)) {
-            throw new ValidationException("Il file selezionato non esiste più.");
+            throw new ValidationException("The selected file no longer exists.");
         }
 
         try {
@@ -63,7 +63,7 @@ public final class AvatarImageProcessor {
 
             try (ImageInputStream input = ImageIO.createImageInputStream(path.toFile())) {
                 if (input == null) {
-                    throw new ValidationException("Non è stato possibile leggere il file selezionato.");
+                    throw new ValidationException("The selected file could not be read.");
                 }
 
                 ImageReader reader = firstReader(input);
@@ -71,7 +71,7 @@ public final class AvatarImageProcessor {
                     reader.setInput(input, true, true);
                     String format = normalizeFormat(reader.getFormatName());
                     if (!"png".equals(format) && !"jpeg".equals(format)) {
-                        throw new ValidationException("Sono supportate soltanto immagini PNG e JPG.");
+                        throw new ValidationException("Only PNG and JPG images are supported.");
                     }
 
                     int width = reader.getWidth(0);
@@ -83,7 +83,7 @@ public final class AvatarImageProcessor {
                     params.setSourceSubsampling(subsampling, subsampling, 0, 0);
                     BufferedImage preview = reader.read(0, params);
                     if (preview == null) {
-                        throw new ValidationException("Il contenuto dell'immagine non è leggibile.");
+                        throw new ValidationException("The image content cannot be read.");
                     }
 
                     return new Source(path.toAbsolutePath().normalize(), fileSize, format,
@@ -95,13 +95,13 @@ public final class AvatarImageProcessor {
         } catch (ValidationException ex) {
             throw ex;
         } catch (IOException | RuntimeException ex) {
-            throw new ValidationException("L'immagine è danneggiata o non può essere letta.", ex);
+            throw new ValidationException("The image is damaged or cannot be read.", ex);
         }
     }
 
     public BufferedImage createMaster(Source source, CropSelection selection) throws IOException {
         if (source == null || selection == null) {
-            throw new IllegalArgumentException("Sorgente e ritaglio sono obbligatori");
+            throw new IllegalArgumentException("The source and crop selection are required");
         }
 
         CropRegion crop = resolveCropRegion(source.width(), source.height(), selection);
@@ -112,28 +112,28 @@ public final class AvatarImageProcessor {
 
     public static void validateFileSize(long fileSize) {
         if (fileSize <= 0) {
-            throw new ValidationException("Il file selezionato è vuoto.");
+            throw new ValidationException("The selected file is empty.");
         }
         if (fileSize > MAX_UPLOAD_BYTES) {
-            throw new ValidationException("La foto profilo non può superare 10 MB.");
+            throw new ValidationException("The profile picture cannot exceed 10 MB.");
         }
     }
 
     public static void validateDimensions(int width, int height) {
         if (width < MIN_SOURCE_EDGE || height < MIN_SOURCE_EDGE) {
-            throw new ValidationException("L'immagine deve essere larga e alta almeno 300 pixel.");
+            throw new ValidationException("The image must be at least 300 pixels wide and high.");
         }
         if (width > MAX_SOURCE_EDGE || height > MAX_SOURCE_EDGE) {
-            throw new ValidationException("L'immagine non può superare 20000 × 20000 pixel.");
+            throw new ValidationException("The image cannot exceed 20000 × 20000 pixels.");
         }
         if ((long) width * height > (long) MAX_SOURCE_EDGE * MAX_SOURCE_EDGE) {
-            throw new ValidationException("L'immagine contiene troppi pixel.");
+            throw new ValidationException("The image contains too many pixels.");
         }
     }
 
     public static int calculateSubsampling(int width, int height, int maximumEdge) {
         if (width <= 0 || height <= 0 || maximumEdge <= 0) {
-            throw new IllegalArgumentException("Dimensioni di sottocampionamento non valide");
+            throw new IllegalArgumentException("Invalid subsampling dimensions");
         }
         long largestEdge = Math.max(width, height);
         return (int) Math.max(1L, (largestEdge + maximumEdge - 1L) / maximumEdge);
@@ -149,7 +149,7 @@ public final class AvatarImageProcessor {
         if (selection == null || !Double.isFinite(selection.centerX())
                 || !Double.isFinite(selection.centerY()) || !Double.isFinite(selection.zoom())
                 || selection.zoom() < 1.0 || selection.zoom() > maxZoomFor(width, height) + 1e-9) {
-            throw new IllegalArgumentException("Ritaglio avatar non valido");
+            throw new IllegalArgumentException("Invalid profile picture crop");
         }
 
         double side = Math.min(width, height) / selection.zoom();
@@ -172,7 +172,7 @@ public final class AvatarImageProcessor {
 
     public static BufferedImage resizeLanczos(BufferedImage source, int targetSize) {
         if (source == null || targetSize <= 0) {
-            throw new IllegalArgumentException("Immagine o dimensione avatar non valida");
+            throw new IllegalArgumentException("Invalid image or profile picture size");
         }
         if (source.getWidth() == targetSize && source.getHeight() == targetSize
                 && source.getType() == BufferedImage.TYPE_INT_ARGB) {
@@ -191,18 +191,18 @@ public final class AvatarImageProcessor {
         long currentFileSize = Files.size(source.path());
         validateFileSize(currentFileSize);
         if (currentFileSize != source.fileSize()) {
-            throw new IOException("Il file sorgente è cambiato durante il ritaglio");
+            throw new IOException("The source file changed during cropping");
         }
         try (ImageInputStream input = ImageIO.createImageInputStream(source.path().toFile())) {
             if (input == null) {
-                throw new IOException("File sorgente non leggibile");
+                throw new IOException("The source file cannot be read");
             }
 
             ImageReader reader = firstReader(input);
             try {
                 reader.setInput(input, true, true);
                 if (reader.getWidth(0) != source.width() || reader.getHeight(0) != source.height()) {
-                    throw new IOException("Il file sorgente è cambiato durante il ritaglio");
+                    throw new IOException("The source file changed during cropping");
                 }
 
                 ImageReadParam params = reader.getDefaultReadParam();
@@ -211,7 +211,7 @@ public final class AvatarImageProcessor {
                 params.setSourceSubsampling(subsampling, subsampling, 0, 0);
                 BufferedImage decoded = reader.read(0, params);
                 if (decoded == null) {
-                    throw new IOException("Ritaglio immagine non leggibile");
+                    throw new IOException("The cropped image cannot be read");
                 }
                 return toArgb(decoded);
             } finally {
@@ -223,7 +223,7 @@ public final class AvatarImageProcessor {
     private static ImageReader firstReader(ImageInputStream input) {
         Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
         if (!readers.hasNext()) {
-            throw new ValidationException("Il file non contiene un'immagine PNG o JPG valida.");
+            throw new ValidationException("The file does not contain a valid PNG or JPG image.");
         }
         return readers.next();
     }

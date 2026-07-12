@@ -2,6 +2,7 @@ package com.crm.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ class CrmDataSnapshotTest {
         Contact contact = new Contact("contact-1", "Ada", "VoidReach", "CTO", "ada@example.com",
                 "1", "today", "vip", "notes");
         Task task = new Task("task-1", "Call", "", 540, 30, "Blue");
+        task.setCompleted(true);
         List<Contact> contacts = new ArrayList<>(List.of(contact));
         Map<LocalDate, List<Task>> tasks = Map.of(LocalDate.of(2026, 7, 12), new ArrayList<>(List.of(task)));
 
@@ -25,6 +27,7 @@ class CrmDataSnapshotTest {
 
         assertEquals("Ada", snapshot.contacts().getFirst().nameProperty().get());
         assertEquals(540, snapshot.tasksByDate().get(LocalDate.of(2026, 7, 12)).getFirst().getStartMin());
+        assertTrue(snapshot.tasksByDate().get(LocalDate.of(2026, 7, 12)).getFirst().isCompleted());
         assertThrows(UnsupportedOperationException.class, () -> snapshot.contacts().add(contact));
     }
 }

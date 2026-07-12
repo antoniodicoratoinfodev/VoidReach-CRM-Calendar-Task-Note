@@ -1,189 +1,406 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.image.*?>
-<?import javafx.geometry.Insets?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.crm.controller.MainController">
-    <!-- Sidebar -->
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.crm.controller.MainController" styleClass="app-shell">
     <left>
-        <VBox prefWidth="70" styleClass="sidebar" spacing="25" alignment="TOP_CENTER">
-            <padding>
-                <Insets top="30" bottom="20"/>
-            </padding>
-            <!-- App icon removed from sidebar as requested -->
-            
-            <VBox fx:id="sidebarContainer" spacing="10" alignment="CENTER">
-                <Button fx:id="sideHomeBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                    <graphic><FontIcon iconLiteral="fas-home" iconSize="18" iconColor="white"/></graphic>
+        <VBox prefWidth="216" minWidth="200" maxWidth="232" styleClass="sidebar">
+            <HBox alignment="CENTER_LEFT" spacing="11" styleClass="brand-lockup">
+                <StackPane styleClass="brand-mark">
+                    <ImageView fitWidth="30" fitHeight="30" preserveRatio="true" smooth="true">
+                        <image><Image url="@/images/app-icon.png"/></image>
+                    </ImageView>
+                </StackPane>
+                <VBox spacing="-2">
+                    <Label text="VoidReach" styleClass="brand-title"/>
+                    <Label text="CRM WORKSPACE" styleClass="brand-caption"/>
+                </VBox>
+            </HBox>
+
+            <Label text="WORKSPACE" styleClass="nav-section-label"/>
+            <VBox fx:id="sidebarContainer" spacing="5" VBox.vgrow="ALWAYS">
+                <Button fx:id="sideHomeBtn" text="Home" onAction="#handleNavigation" styleClass="sidebar-button, sidebar-button-active">
+                    <graphic><FontIcon iconLiteral="fas-home" iconSize="16" styleClass="nav-icon"/></graphic>
                 </Button>
-                <Button fx:id="sideDashboardBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                    <graphic><FontIcon iconLiteral="fas-th-large" iconSize="18" iconColor="white"/></graphic>
+                <Button fx:id="sideDashboardBtn" text="Dashboard" onAction="#handleNavigation" styleClass="sidebar-button">
+                    <graphic><FontIcon iconLiteral="fas-th-large" iconSize="16" styleClass="nav-icon"/></graphic>
                 </Button>
-                <Button fx:id="sideContactsBtn" onAction="#handleNavigation" styleClass="sidebar-button, sidebar-button-active">
-                    <graphic><FontIcon iconLiteral="fas-user-friends" iconSize="18" iconColor="white"/></graphic>
+                <Button fx:id="sideContactsBtn" text="Contacts" onAction="#handleNavigation" styleClass="sidebar-button">
+                    <graphic><FontIcon iconLiteral="fas-user-friends" iconSize="16" styleClass="nav-icon"/></graphic>
                 </Button>
-                <Button fx:id="sideCalendarBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                    <graphic><FontIcon iconLiteral="fas-calendar-alt" iconSize="18" iconColor="white"/></graphic>
+                <Button fx:id="sideCalendarBtn" text="Calendar" onAction="#handleNavigation" styleClass="sidebar-button">
+                    <graphic><FontIcon iconLiteral="fas-calendar-alt" iconSize="16" styleClass="nav-icon"/></graphic>
                 </Button>
-                <Button fx:id="sideLeadsBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                    <graphic><FontIcon iconLiteral="fas-bullseye" iconSize="18" iconColor="white"/></graphic>
+                <Button fx:id="sideTasksBtn" text="Tasks" onAction="#handleNavigation" styleClass="sidebar-button">
+                    <graphic><FontIcon iconLiteral="fas-tasks" iconSize="16" styleClass="nav-icon"/></graphic>
                 </Button>
-                <Button fx:id="sideDealsBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                    <graphic><FontIcon iconLiteral="fas-handshake" iconSize="18" iconColor="white"/></graphic>
+                <Region VBox.vgrow="ALWAYS"/>
+                <Separator styleClass="nav-separator"/>
+                <Button fx:id="themeToggleBtn" text="Change theme" onAction="#handleThemeToggle" styleClass="sidebar-button">
+                    <graphic><FontIcon fx:id="themeToggleIcon" iconLiteral="fas-moon" iconSize="16" styleClass="nav-icon"/></graphic>
                 </Button>
-                <Button fx:id="sideAccountsBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                    <graphic><FontIcon iconLiteral="fas-building" iconSize="18" iconColor="white"/></graphic>
-                </Button>
-                <Button fx:id="sideTasksBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                    <graphic><FontIcon iconLiteral="fas-tasks" iconSize="18" iconColor="white"/></graphic>
+                <Button fx:id="sideSettingsBtn" text="Settings" onAction="#handleNavigation" styleClass="sidebar-button">
+                    <graphic><FontIcon iconLiteral="fas-cog" iconSize="16" styleClass="nav-icon"/></graphic>
                 </Button>
             </VBox>
-            
-            <Region VBox.vgrow="ALWAYS"/>
-            
-            <Button fx:id="themeToggleBtn" onAction="#handleThemeToggle" styleClass="sidebar-button">
-                <graphic><FontIcon fx:id="themeToggleIcon" iconLiteral="fas-moon" iconSize="18" iconColor="white"/></graphic>
-            </Button>
-            
-            <Button fx:id="sideSettingsBtn" onAction="#handleNavigation" styleClass="sidebar-button">
-                <graphic><FontIcon iconLiteral="fas-cog" iconSize="18" iconColor="white"/></graphic>
-            </Button>
         </VBox>
     </left>
 
-    <!-- Main Content Area -->
     <center>
-        <VBox>
-            <!-- Navbar -->
-            <HBox styleClass="navbar" spacing="25" alignment="CENTER_LEFT">
-                <Label fx:id="saveStatusLabel" text="" style="-fx-text-fill: #94a3b8; -fx-font-size: 11px;"/>
+        <VBox styleClass="main-surface">
+            <HBox minHeight="72" prefHeight="72" alignment="CENTER_LEFT" spacing="16" styleClass="navbar">
+                <VBox spacing="2">
+                    <Label text="Your workspace" styleClass="topbar-title"/>
+                    <Label fx:id="saveStatusLabel" text="" styleClass="save-status"/>
+                </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
-                
-                <HBox spacing="15" alignment="CENTER">
-                    <FontIcon iconLiteral="fas-question-circle" iconSize="16" iconColor="#94a3b8"/>
-                    <FontIcon iconLiteral="fas-bell" iconSize="16" iconColor="#94a3b8"/>
-                    <Button fx:id="accountMenuButton" onAction="#handleAccountMenu" styleClass="account-menu-button">
-                        <graphic>
-                            <HBox spacing="8" alignment="CENTER">
-                                <Label fx:id="currentUserLabel" text="Utente" style="-fx-font-weight: 600;"/>
-                                <StackPane styleClass="avatar-frame">
-                                    <FontIcon fx:id="defaultAvatarIcon" iconLiteral="fas-user-circle" iconSize="56" iconColor="#cbd5e1"/>
-                                    <ImageView fx:id="avatarImage" fitWidth="56" fitHeight="56" preserveRatio="true" smooth="true" cache="false" visible="false">
-                                        <clip>
-                                            <Circle centerX="28" centerY="28" radius="28"/>
-                                        </clip>
-                                    </ImageView>
-                                </StackPane>
-                            </HBox>
-                        </graphic>
-                    </Button>
-                </HBox>
+                <Button styleClass="icon-button" focusTraversable="false">
+                    <graphic><FontIcon iconLiteral="fas-question-circle" iconSize="16" styleClass="toolbar-icon"/></graphic>
+                    <tooltip><Tooltip text="Help"/></tooltip>
+                </Button>
+                <Button styleClass="icon-button" focusTraversable="false">
+                    <graphic><FontIcon iconLiteral="fas-bell" iconSize="16" styleClass="toolbar-icon"/></graphic>
+                    <tooltip><Tooltip text="Notifications"/></tooltip>
+                </Button>
+                <Button onAction="#handleToggleAgenda" styleClass="icon-button" focusTraversable="false">
+                    <graphic><FontIcon iconLiteral="fas-calendar-alt" iconSize="16" styleClass="toolbar-icon"/></graphic>
+                    <tooltip><Tooltip text="Show or hide agenda"/></tooltip>
+                </Button>
+                <Button fx:id="accountMenuButton" onAction="#handleAccountMenu" styleClass="account-menu-button">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER">
+                            <StackPane styleClass="avatar-frame">
+                                <FontIcon fx:id="defaultAvatarIcon" iconLiteral="fas-user-circle" iconSize="40" styleClass="avatar-placeholder"/>
+                                <ImageView fx:id="avatarImage" fitWidth="40" fitHeight="40" preserveRatio="true" smooth="true" cache="false" visible="false">
+                                    <clip><Circle centerX="20" centerY="20" radius="20"/></clip>
+                                </ImageView>
+                            </StackPane>
+                            <VBox spacing="-1" alignment="CENTER_LEFT">
+                                <Label fx:id="currentUserLabel" text="User" styleClass="account-name"/>
+                                <Label text="Personal account" styleClass="account-caption"/>
+                            </VBox>
+                            <FontIcon iconLiteral="fas-chevron-down" iconSize="10" styleClass="toolbar-icon"/>
+                        </HBox>
+                    </graphic>
+                </Button>
             </HBox>
 
-            <!-- Dynamic Content Area -->
             <StackPane fx:id="contentStack" VBox.vgrow="ALWAYS">
-                <!-- Contacts View -->
-                <VBox fx:id="contactsView" styleClass="content-area" spacing="25">
-                    <Label text="Contacts" styleClass="section-title"/>
-                    
-                    <HBox spacing="15" alignment="CENTER_LEFT">
-                        <Button fx:id="addNewBtn" onAction="#handleAddContact" text="Add New" styleClass="btn-primary"/>
+                <ScrollPane fx:id="homeView" fitToWidth="true" hbarPolicy="NEVER" styleClass="overview-scroll">
+                  <content>
+                   <VBox spacing="20" styleClass="content-area, overview-view">
+                    <HBox alignment="BOTTOM_LEFT">
+                        <VBox spacing="5">
+                            <Label text="TODAY" styleClass="page-eyebrow"/>
+                            <Label fx:id="homeGreetingLabel" text="Welcome back" styleClass="section-title"/>
+                            <Label fx:id="homeDateLabel" text="" styleClass="section-subtitle"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <HBox spacing="10">
+                            <Button text="New contact" onAction="#handleAddContact" styleClass="btn-primary">
+                                <graphic><FontIcon iconLiteral="fas-user-plus" iconSize="12" styleClass="button-icon-light"/></graphic>
+                            </Button>
+                            <Button text="Open calendar" onAction="#handleOpenToday" styleClass="btn-primary">
+                                <graphic><FontIcon iconLiteral="fas-calendar-day" iconSize="12" styleClass="button-icon-light"/></graphic>
+                            </Button>
+                        </HBox>
+                    </HBox>
+
+                    <HBox spacing="12">
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="CONTACTS" styleClass="metric-label"/>
+                            <Label fx:id="homeContactsCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="in your address book" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="TODAY" styleClass="metric-label"/>
+                            <Label fx:id="homeTodayCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="scheduled tasks" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="NEXT 7 DAYS" styleClass="metric-label"/>
+                            <Label fx:id="homeWeekCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="tasks on your agenda" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card, next-activity-card" HBox.hgrow="ALWAYS">
+                            <Label text="NEXT TASK" styleClass="metric-label"/>
+                            <Label fx:id="homeNextTitleLabel" text="No upcoming tasks" styleClass="next-activity-title"/>
+                            <Label fx:id="homeNextTimeLabel" text="" styleClass="metric-caption"/>
+                        </VBox>
+                    </HBox>
+
+                    <GridPane hgap="14" vgap="14" VBox.vgrow="ALWAYS">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        <VBox spacing="12" styleClass="overview-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <HBox alignment="CENTER_LEFT">
+                                <Label text="Today's agenda" styleClass="overview-card-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="Calendar" onAction="#handleOpenToday" styleClass="text-button"/>
+                            </HBox>
+                            <VBox fx:id="homeTodayList" spacing="7" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+                        <VBox spacing="12" styleClass="overview-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <HBox alignment="CENTER_LEFT">
+                                <Label text="Upcoming" styleClass="overview-card-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="NEXT 7 DAYS" styleClass="overview-card-kicker"/>
+                            </HBox>
+                            <VBox fx:id="homeUpcomingList" spacing="7" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+                        <VBox spacing="12" styleClass="overview-card" GridPane.columnSpan="2" GridPane.rowIndex="1">
+                            <HBox alignment="CENTER_LEFT">
+                                <Label text="Address book contacts" styleClass="overview-card-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="Open contacts" onAction="#handleOpenContacts" styleClass="text-button"/>
+                            </HBox>
+                            <VBox fx:id="homeContactsList" spacing="7"/>
+                        </VBox>
+                    </GridPane>
+                   </VBox>
+                  </content>
+                </ScrollPane>
+
+                <ScrollPane fx:id="dashboardView" visible="false" fitToWidth="true" hbarPolicy="NEVER" styleClass="overview-scroll">
+                  <content>
+                   <VBox spacing="20" styleClass="content-area, overview-view">
+                    <VBox spacing="5">
+                        <Label text="ANALYTICS" styleClass="page-eyebrow"/>
+                        <Label text="Dashboard" styleClass="section-title"/>
+                        <Label text="A practical overview of contacts and scheduled tasks." styleClass="section-subtitle"/>
+                    </VBox>
+                    <HBox spacing="12">
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="TOTAL CONTACTS" styleClass="metric-label"/>
+                            <Label fx:id="dashboardContactsCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="saved records" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="TOTAL TASKS" styleClass="metric-label"/>
+                            <Label fx:id="dashboardActivitiesCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="in the calendar" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="NEXT 7 DAYS" styleClass="metric-label"/>
+                            <Label fx:id="dashboardWeekCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="scheduled tasks" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="PLANNED TIME" styleClass="metric-label"/>
+                            <Label fx:id="dashboardHoursCountLabel" text="0 h" styleClass="metric-value"/>
+                            <Label text="across the calendar" styleClass="metric-caption"/>
+                        </VBox>
+                    </HBox>
+                    <GridPane hgap="14" vgap="14" VBox.vgrow="ALWAYS">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        <VBox spacing="8" styleClass="overview-card, chart-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <Label text="Contact distribution" styleClass="overview-card-title"/>
+                            <Label text="Contacts grouped by tag" styleClass="overview-card-subtitle"/>
+                            <PieChart fx:id="dashboardTagsChart" legendSide="RIGHT" labelsVisible="false" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+                        <VBox spacing="8" styleClass="overview-card, chart-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <Label text="Upcoming workload" styleClass="overview-card-title"/>
+                            <Label text="Number of tasks per day" styleClass="overview-card-subtitle"/>
+                            <BarChart fx:id="dashboardActivityChart" legendVisible="false" categoryGap="18" barGap="3" VBox.vgrow="ALWAYS">
+                                <xAxis><CategoryAxis tickLabelRotation="0"/></xAxis>
+                                <yAxis><NumberAxis forceZeroInRange="true" minorTickVisible="false" tickUnit="1"/></yAxis>
+                            </BarChart>
+                        </VBox>
+                        <VBox spacing="12" styleClass="overview-card" GridPane.columnSpan="2" GridPane.rowIndex="1">
+                            <Label text="Recorded interactions" styleClass="overview-card-title"/>
+                            <VBox fx:id="dashboardInteractionsList" spacing="7"/>
+                        </VBox>
+                    </GridPane>
+                   </VBox>
+                  </content>
+                </ScrollPane>
+
+                <VBox fx:id="contactsView" visible="false" spacing="20" styleClass="content-area">
+                    <HBox alignment="BOTTOM_LEFT">
+                        <VBox spacing="5">
+                            <Label text="RELATIONSHIPS" styleClass="page-eyebrow"/>
+                            <Label text="Contacts" styleClass="section-title"/>
+                            <Label text="Organize people, companies, and upcoming interactions." styleClass="section-subtitle"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="addNewBtn" onAction="#handleAddContact" text="New contact" styleClass="btn-primary">
+                            <graphic><FontIcon iconLiteral="fas-plus" iconSize="13" styleClass="button-icon-light"/></graphic>
+                        </Button>
+                    </HBox>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="toolbar-card">
+                        <TextField fx:id="searchField" promptText="Search by name, company, or email…" styleClass="search-bar" prefWidth="320" HBox.hgrow="ALWAYS"/>
+                        <MenuButton fx:id="contactsSortMenu" text="Sort" styleClass="btn-secondary, sort-menu"/>
+                        <Separator orientation="VERTICAL" styleClass="toolbar-separator"/>
+                        <Label text="Rows" styleClass="control-label"/>
+                        <ComboBox fx:id="rowsPerPageCombo" prefWidth="86"/>
                         <Button fx:id="selectContactsBtn" onAction="#handleToggleContactSelection" text="Select" styleClass="btn-secondary"/>
-                        <Button fx:id="deleteBtn" onAction="#handleDeleteContact" text="Delete" styleClass="btn-secondary" style="-fx-text-fill: #ef4444;"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Button fx:id="allContactsBtn" onAction="#handleShowAllContacts" text="All Contacts" styleClass="btn-secondary"/>
-                        <Label text="Rows per page:"/>
-                        <ComboBox fx:id="rowsPerPageCombo" prefWidth="100"/>
-                        <TextField fx:id="searchField" promptText="Search Contacts..." styleClass="search-bar" prefWidth="300"/>
+                        <Button fx:id="deleteBtn" onAction="#handleDeleteContact" text="Delete" styleClass="btn-secondary, danger-button"/>
                     </HBox>
-                    
-                    <TableView fx:id="contactsTable" VBox.vgrow="ALWAYS">
-                        <columnResizePolicy>
-                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN"/>
-                        </columnResizePolicy>
-                        <columns>
-                            <TableColumn fx:id="selectColumn" text="" minWidth="42" maxWidth="42" prefWidth="42" visible="false"/>
-                            <TableColumn fx:id="nameColumn" text="Name" minWidth="120"/>
-                            <TableColumn fx:id="companyColumn" text="Company" minWidth="120"/>
-                            <TableColumn fx:id="titleColumn" text="Title" minWidth="120"/>
-                            <TableColumn fx:id="emailColumn" text="Email" minWidth="180"/>
-                            <TableColumn fx:id="phoneColumn" text="Phone" minWidth="120"/>
-                            <TableColumn fx:id="lastInteractionColumn" text="Last Interaction" minWidth="140"/>
-                            <TableColumn fx:id="tagsColumn" text="Tags" minWidth="100" maxWidth="120"/>
-                        </columns>
-                    </TableView>
-                    
-                    <HBox spacing="10" alignment="CENTER_LEFT">
-                        <Label fx:id="paginationInfoLabel" text="Showing 0-0 of 0 Contacts" style="-fx-text-fill: #64748b; -fx-font-size: 13px;"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Pagination fx:id="contactsPagination" maxPageIndicatorCount="5" styleClass="pagination"/>
-                    </HBox>
+
+                    <VBox styleClass="data-card" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="contactsTable" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="selectColumn" text="" minWidth="42" maxWidth="42" prefWidth="42" visible="false"/>
+                                <TableColumn fx:id="nameColumn" text="Name" minWidth="110" prefWidth="170"/>
+                                <TableColumn fx:id="companyColumn" text="Company" minWidth="105" prefWidth="150"/>
+                                <TableColumn fx:id="titleColumn" text="Job title" minWidth="100" prefWidth="140"/>
+                                <TableColumn fx:id="emailColumn" text="Email" minWidth="145" prefWidth="220"/>
+                                <TableColumn fx:id="phoneColumn" text="Phone" minWidth="110" prefWidth="145"/>
+                                <TableColumn fx:id="lastInteractionColumn" text="Last interaction" minWidth="130" prefWidth="165"/>
+                                <TableColumn fx:id="tagsColumn" text="Tag" minWidth="95" prefWidth="120"/>
+                            </columns>
+                        </TableView>
+                        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="table-footer">
+                            <Label fx:id="paginationInfoLabel" text="0 contacts" styleClass="pagination-info"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Pagination fx:id="contactsPagination" maxPageIndicatorCount="5" styleClass="pagination"/>
+                        </HBox>
+                    </VBox>
                 </VBox>
 
-                <!-- Google Calendar View -->
-                <VBox fx:id="calendarView" visible="false" styleClass="calendar-container">
-                    <HBox styleClass="calendar-header" alignment="CENTER_LEFT" spacing="20">
-                        <DatePicker fx:id="calendarDatePicker" prefWidth="180" styleClass="calendar-date-picker" style="-fx-font-size: 14px;"/>
-                        <Button text="Today" onAction="#handleToday" styleClass="btn-today"/>
-                        <HBox spacing="5">
-                            <Button text="&lt;" onAction="#handlePrevDay" style="-fx-background-color: transparent;"/>
-                            <Button text="&gt;" onAction="#handleNextDay" style="-fx-background-color: transparent;"/>
-                        </HBox>
-                        <Label fx:id="selectedPeriodLabel" text="Il giorno selezionato:" style="-fx-text-fill: #64748b; -fx-font-size: 13px;"/>
+                <VBox fx:id="calendarView" visible="false" spacing="18" styleClass="calendar-container">
+                    <HBox alignment="BOTTOM_LEFT">
+                        <VBox spacing="5">
+                            <Label text="PLANNING" styleClass="page-eyebrow"/>
+                            <Label text="Calendar" styleClass="section-title"/>
+                            <Label fx:id="selectedPeriodLabel" text="Selected day" styleClass="section-subtitle"/>
+                        </VBox>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <ComboBox fx:id="viewModeCombo" prefWidth="100" promptText="Day"/>
+                        <ComboBox fx:id="viewModeCombo" prefWidth="112" promptText="Day" styleClass="view-mode-combo"/>
                     </HBox>
-                    <ScrollPane fx:id="calendarScrollPane" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="calendar-header">
+                        <DatePicker fx:id="calendarDatePicker" prefWidth="170" styleClass="calendar-date-picker"/>
+                        <Button text="Today" onAction="#handleToday" styleClass="btn-today"/>
+                        <HBox spacing="4" styleClass="segmented-navigation">
+                            <Button onAction="#handlePrevDay" styleClass="icon-button, segment-button">
+                                <graphic><FontIcon iconLiteral="fas-chevron-left" iconSize="11" styleClass="toolbar-icon"/></graphic>
+                            </Button>
+                            <Button onAction="#handleNextDay" styleClass="icon-button, segment-button">
+                                <graphic><FontIcon iconLiteral="fas-chevron-right" iconSize="11" styleClass="toolbar-icon"/></graphic>
+                            </Button>
+                        </HBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Ctrl/⌘ + mouse wheel to zoom" styleClass="calendar-hint"/>
+                    </HBox>
+                    <ScrollPane fx:id="calendarScrollPane" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" styleClass="calendar-scroll">
                         <HBox spacing="0">
-                            <!-- Time Labels Column (AnchorPane for absolute positioning) -->
-                            <AnchorPane fx:id="timeLabelsContainer" prefWidth="65" minWidth="65" maxWidth="65" styleClass="time-column"/>
-                            
-                            <!-- Timeline Area -->
-                            <AnchorPane fx:id="calendarTimelineArea" prefWidth="1000" prefHeight="1440" HBox.hgrow="ALWAYS" styleClass="timeline-area">
-                                <!-- Background lines will be drawn here -->
-                            </AnchorPane>
+                            <AnchorPane fx:id="timeLabelsContainer" prefWidth="72" minWidth="72" maxWidth="72" styleClass="time-column"/>
+                            <AnchorPane fx:id="calendarTimelineArea" prefWidth="1000" prefHeight="1440" HBox.hgrow="ALWAYS" styleClass="timeline-area"/>
                         </HBox>
                     </ScrollPane>
                 </VBox>
 
-                <!-- Generic View Placeholder -->
-                <VBox fx:id="genericView" visible="false" alignment="CENTER" spacing="20">
-                    <FontIcon fx:id="genericIcon" iconLiteral="fas-folder-open" iconSize="64" iconColor="#cbd5e1"/>
-                    <Label fx:id="genericTitle" text="Section Title" styleClass="section-title"/>
-                    <Label text="This section is under development." style="-fx-text-fill: #94a3b8; -fx-font-size: 16px;"/>
+                <VBox fx:id="tasksView" visible="false" spacing="18" styleClass="content-area, tasks-view">
+                    <HBox alignment="BOTTOM_LEFT">
+                        <VBox spacing="5">
+                            <Label text="OPERATIONS" styleClass="page-eyebrow"/>
+                            <Label text="Tasks" styleClass="section-title"/>
+                            <Label text="Manage all calendar tasks in one place." styleClass="section-subtitle"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="New task" onAction="#handleAddTask" styleClass="btn-primary">
+                            <graphic><FontIcon iconLiteral="fas-plus" iconSize="13" styleClass="button-icon-light"/></graphic>
+                        </Button>
+                    </HBox>
+
+                    <HBox spacing="12">
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="TOTAL" styleClass="metric-label"/>
+                            <Label fx:id="tasksTotalCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="in the calendar" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="DUE TODAY" styleClass="metric-label"/>
+                            <Label fx:id="tasksTodayCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="still open" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="NEXT 7 DAYS" styleClass="metric-label"/>
+                            <Label fx:id="tasksUpcomingCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="to complete" styleClass="metric-caption"/>
+                        </VBox>
+                        <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                            <Label text="COMPLETED" styleClass="metric-label"/>
+                            <Label fx:id="tasksCompletedCountLabel" text="0" styleClass="metric-value"/>
+                            <Label text="finished tasks" styleClass="metric-caption"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="toolbar-card">
+                        <TextField fx:id="taskSearchField" promptText="Search by title or description…" styleClass="search-bar" HBox.hgrow="ALWAYS"/>
+                        <ComboBox fx:id="taskFilterCombo" prefWidth="180"/>
+                    </HBox>
+
+                    <VBox styleClass="data-card, task-list-card" VBox.vgrow="ALWAYS">
+                        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="task-list-scroll" VBox.vgrow="ALWAYS">
+                            <VBox fx:id="taskListContainer" spacing="8" styleClass="task-list"/>
+                        </ScrollPane>
+                        <Label fx:id="tasksEmptyLabel" text="There are no tasks yet." wrapText="true" styleClass="tasks-empty"/>
+                    </VBox>
+                </VBox>
+
+                <VBox fx:id="genericView" visible="false" alignment="CENTER" spacing="16" styleClass="generic-view">
+                    <StackPane styleClass="empty-icon-wrap">
+                        <FontIcon fx:id="genericIcon" iconLiteral="fas-folder-open" iconSize="34" styleClass="empty-icon"/>
+                    </StackPane>
+                    <Label fx:id="genericTitle" text="Sezione" styleClass="section-title"/>
+                    <Label text="This section is under construction." styleClass="section-subtitle"/>
+                    <Label text="These features will be available in a future update." styleClass="empty-caption"/>
                 </VBox>
             </StackPane>
         </VBox>
     </center>
 
-    <!-- Right Sidebar -->
     <right>
-        <VBox prefWidth="280" styleClass="right-panel" spacing="30">
-            <Label text="Upcoming Activities &amp; Calendar" style="-fx-font-weight: 700; -fx-font-size: 15px;"/>
-            
-            <VBox spacing="15" styleClass="mini-calendar-container">
+        <VBox fx:id="rightPanel" prefWidth="296" minWidth="276" maxWidth="316" spacing="20" styleClass="right-panel">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <StackPane styleClass="panel-icon-wrap">
+                    <FontIcon iconLiteral="fas-calendar-check" iconSize="14" styleClass="accent-icon"/>
+                </StackPane>
+                <VBox spacing="1">
+                    <Label text="Agenda" styleClass="panel-title"/>
+                    <Label text="Daily overview" styleClass="panel-subtitle"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="14" styleClass="mini-calendar-container">
                 <HBox alignment="CENTER">
-                    <Button text="&lt;" onAction="#handleMiniPrevMonth" style="-fx-background-color: transparent; -fx-text-fill: #64748b;"/>
+                    <Button onAction="#handleMiniPrevMonth" styleClass="icon-button, mini-nav-button">
+                        <graphic><FontIcon iconLiteral="fas-chevron-left" iconSize="10" styleClass="toolbar-icon"/></graphic>
+                    </Button>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="miniMonthYearLabel" text="May 2026" style="-fx-font-weight: 600;"/>
+                    <Label fx:id="miniMonthYearLabel" text="Maggio 2026" styleClass="mini-month-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="&gt;" onAction="#handleMiniNextMonth" style="-fx-background-color: transparent; -fx-text-fill: #64748b;"/>
+                    <Button onAction="#handleMiniNextMonth" styleClass="icon-button, mini-nav-button">
+                        <graphic><FontIcon iconLiteral="fas-chevron-right" iconSize="10" styleClass="toolbar-icon"/></graphic>
+                    </Button>
                 </HBox>
-                <GridPane fx:id="miniCalendarGrid" hgap="2" vgap="2" alignment="CENTER">
-                    <!-- Days will be added by controller -->
-                </GridPane>
+                <GridPane fx:id="miniCalendarGrid" hgap="3" vgap="3" alignment="CENTER"/>
             </VBox>
-            
-            <VBox spacing="20" VBox.vgrow="ALWAYS">
-                <Label fx:id="activitiesTitle" text="Activities for Selected Day" style="-fx-font-weight: 700; -fx-font-size: 13px;"/>
-                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
-                    <VBox fx:id="upcomingActivitiesList" spacing="15">
-                        <!-- Dynamic list of tasks -->
-                    </VBox>
+
+            <Separator styleClass="panel-separator"/>
+            <VBox spacing="12" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT">
+                    <Label fx:id="activitiesTitle" text="Today's tasks" styleClass="panel-section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <FontIcon iconLiteral="fas-stream" iconSize="12" styleClass="toolbar-icon"/>
+                </HBox>
+                <ScrollPane fitToWidth="true" styleClass="activities-scroll" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="upcomingActivitiesList" spacing="10"/>
                 </ScrollPane>
             </VBox>
         </VBox>

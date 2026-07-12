@@ -10,7 +10,6 @@ import javafx.util.Duration;
 public class SplashScreenController {
 
     @FXML private ImageView logoView;
-    @FXML private Rectangle logoGlow;
     @FXML private Label statusLabel;
     @FXML private Label percentLabel;
     @FXML private Rectangle progressFill;
@@ -27,14 +26,6 @@ public class SplashScreenController {
         scale.setCycleCount(Animation.INDEFINITE);
         scale.play();
 
-        // Animazione Glow: respira con il logo
-        FadeTransition glowFade = new FadeTransition(Duration.millis(2500), logoGlow);
-        glowFade.setFromValue(0.1);
-        glowFade.setToValue(0.3);
-        glowFade.setAutoReverse(true);
-        glowFade.setCycleCount(Animation.INDEFINITE);
-        glowFade.play();
-        
         // Apparizione iniziale
         FadeTransition fadeIn = new FadeTransition(Duration.millis(800), logoView);
         fadeIn.setFromValue(0);
@@ -47,7 +38,7 @@ public class SplashScreenController {
     }
 
     public void setProgress(double progress) {
-        // progress è tra 0.0 e 1.0
+        // Progress is between 0.0 and 1.0.
         if (progressFill != null) {
             double targetWidth = progress * MAX_BAR_WIDTH;
             

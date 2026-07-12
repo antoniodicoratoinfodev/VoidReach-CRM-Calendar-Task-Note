@@ -42,6 +42,25 @@ class LocalUserRepositoryTest {
         assertTrue(sanitized.stringPropertyNames().stream().anyMatch(key -> key.startsWith("user.valid-id.")));
     }
 
+    @Test void preferredThemeIsStoredPerAccountAndDefaultsForLegacyAccounts() throws Exception {
+        LocalUserRepository repository = new LocalUserRepository(directory);
+        UserAccount darkUser = account("dark-id", "dark@example.com", "Dark User");
+        UserAccount lightUser = account("light-id", "light@example.com", "Light User");
+        lightUser.setPreferredTheme("LIGHT");
+        repository.save(darkUser);
+        repository.save(lightUser);
+
+        assertEquals("DARK", repository.findByEmail("dark@example.com").orElseThrow().getPreferredTheme());
+        assertEquals("LIGHT", repository.findByEmail("light@example.com").orElseThrow().getPreferredTheme());
+
+        Path usersFile = directory.resolve("users.properties");
+        Properties stored = load(usersFile);
+        stored.remove("user.light-id.preferredTheme");
+        storeDirectly(usersFile, stored);
+
+        assertEquals("DARK", repository.findByEmail("light@example.com").orElseThrow().getPreferredTheme());
+    }
+
     private static UserAccount account(String id, String email, String name) {
         UserAccount account = new UserAccount();
         account.setId(id);

@@ -63,14 +63,14 @@ public class LoginController {
         String password = loginPassword.getText();
         boolean remember = rememberLogin.isSelected();
         loginPassword.clear();
-        runAuthTask(loginPane, "Accesso in corso…", () -> auth.login(email, password),
+        runAuthTask(loginPane, "Signing in…", () -> auth.login(email, password),
                 user -> authenticated.accept(user, remember),
                 message -> loginMessage.setText(message));
     }
 
     @FXML private void handleRegister() {
         try {
-            if (!registerPassword.getText().equals(registerPasswordConfirm.getText())) throw new IllegalArgumentException("Le password non coincidono.");
+            if (!registerPassword.getText().equals(registerPasswordConfirm.getText())) throw new IllegalArgumentException("The passwords do not match.");
         } catch (IllegalArgumentException e) {
             registerMessage.setText(e.getMessage());
             return;
@@ -80,24 +80,24 @@ public class LoginController {
         String password = registerPassword.getText();
         registerPassword.clear();
         registerPasswordConfirm.clear();
-        runAuthTask(registerPane, "Creazione account…", () -> auth.register(name, email, password),
+        runAuthTask(registerPane, "Creating account…", () -> auth.register(name, email, password),
                 user -> authenticated.accept(user, false),
                 message -> registerMessage.setText(message));
     }
 
     @FXML private void handleRecovery() {
         String email = recoveryEmail.getText().trim();
-        runAuthTask(recoveryPane, "Generazione codice…", () -> auth.requestPasswordReset(email), code -> {
+        runAuthTask(recoveryPane, "Generating code…", () -> auth.requestPasswordReset(email), code -> {
             recoveryEmail.clear();
             show(resetPane);
             resetEmail.setText(email);
-            resetMessage.setText("Codice locale generato. Per questa demo: " + code + " (valido 15 minuti).");
+            resetMessage.setText("Local code generated. For this demo: " + code + " (valid for 15 minutes).");
         }, message -> recoveryMessage.setText(message));
     }
 
     @FXML private void handleReset() {
         try {
-            if (!resetPassword.getText().equals(resetPasswordConfirm.getText())) throw new IllegalArgumentException("Le password non coincidono.");
+            if (!resetPassword.getText().equals(resetPasswordConfirm.getText())) throw new IllegalArgumentException("The passwords do not match.");
         } catch (IllegalArgumentException e) {
             resetMessage.setText(e.getMessage());
             return;
@@ -108,14 +108,14 @@ public class LoginController {
         resetPassword.clear();
         resetPasswordConfirm.clear();
         resetCode.clear();
-        runAuthTask(resetPane, "Aggiornamento password…", () -> {
+        runAuthTask(resetPane, "Updating password…", () -> {
             auth.resetPassword(email, code, password);
             return null;
         }, ignored -> {
             loginEmail.setText(email);
             resetEmail.clear();
             show(loginPane);
-            loginMessage.setText("Password aggiornata. Ora puoi accedere.");
+            loginMessage.setText("Password updated. You can now sign in.");
         }, message -> resetMessage.setText(message));
     }
 
@@ -137,7 +137,7 @@ public class LoginController {
             pane.setDisable(false);
             Throwable failure = task.getException();
             if (failure instanceof IllegalArgumentException && failure.getMessage() != null) onFailure.accept(failure.getMessage());
-            else onFailure.accept("Impossibile completare l'operazione sui dati locali. Riprova senza chiudere l'app.");
+            else onFailure.accept("The local data operation could not be completed. Try again without closing the app.");
         });
         Thread worker = new Thread(task, "voidreach-auth-worker");
         worker.setDaemon(true);

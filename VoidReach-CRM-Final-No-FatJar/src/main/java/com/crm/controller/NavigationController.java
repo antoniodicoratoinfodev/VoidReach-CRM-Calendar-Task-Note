@@ -11,17 +11,24 @@ import java.util.Objects;
 
 /** Owns sidebar selection and switching between the main application views. */
 public final class NavigationController {
+    private final Node homeView;
+    private final Node dashboardView;
     private final VBox contactsView;
     private final VBox calendarView;
+    private final VBox tasksView;
     private final VBox genericView;
     private final Label genericTitle;
     private final FontIcon genericIcon;
     private final VBox sidebarContainer;
 
-    public NavigationController(VBox contactsView, VBox calendarView, VBox genericView,
+    public NavigationController(Node homeView, Node dashboardView,
+                                VBox contactsView, VBox calendarView, VBox tasksView, VBox genericView,
                                 Label genericTitle, FontIcon genericIcon, VBox sidebarContainer) {
+        this.homeView = Objects.requireNonNull(homeView);
+        this.dashboardView = Objects.requireNonNull(dashboardView);
         this.contactsView = Objects.requireNonNull(contactsView);
         this.calendarView = Objects.requireNonNull(calendarView);
+        this.tasksView = Objects.requireNonNull(tasksView);
         this.genericView = Objects.requireNonNull(genericView);
         this.genericTitle = Objects.requireNonNull(genericTitle);
         this.genericIcon = Objects.requireNonNull(genericIcon);
@@ -29,8 +36,11 @@ public final class NavigationController {
     }
 
     public void initialize() {
+        bindManagedToVisible(homeView);
+        bindManagedToVisible(dashboardView);
         bindManagedToVisible(contactsView);
         bindManagedToVisible(calendarView);
+        bindManagedToVisible(tasksView);
         bindManagedToVisible(genericView);
     }
 
@@ -39,15 +49,32 @@ public final class NavigationController {
         updateActiveStyles(button);
         String id = button.getId();
         hideAll();
-        if (id.contains("Contacts")) contactsView.setVisible(true);
+        if (id.contains("Home")) homeView.setVisible(true);
+        else if (id.contains("Dashboard")) dashboardView.setVisible(true);
+        else if (id.contains("Contacts")) contactsView.setVisible(true);
         else if (id.contains("Calendar")) calendarView.setVisible(true);
+        else if (id.contains("Tasks")) tasksView.setVisible(true);
         else showPlaceholder(id);
     }
 
+    public void showContacts() {
+        showView(contactsView, "Contacts");
+    }
+
     public void showCalendar() {
+        showView(calendarView, "Calendar");
+    }
+
+    private void showView(Node view, String buttonIdPart) {
         hideAll();
-        calendarView.setVisible(true);
-        updateActiveStyles(null);
+        view.setVisible(true);
+        Button selectedButton = sidebarContainer.getChildren().stream()
+                .filter(Button.class::isInstance)
+                .map(Button.class::cast)
+                .filter(button -> button.getId() != null && button.getId().contains(buttonIdPart))
+                .findFirst()
+                .orElse(null);
+        updateActiveStyles(selectedButton);
     }
 
     private void bindManagedToVisible(Node view) {
@@ -55,20 +82,17 @@ public final class NavigationController {
     }
 
     private void hideAll() {
+        homeView.setVisible(false);
+        dashboardView.setVisible(false);
         contactsView.setVisible(false);
         calendarView.setVisible(false);
+        tasksView.setVisible(false);
         genericView.setVisible(false);
     }
 
     private void showPlaceholder(String id) {
         genericView.setVisible(true);
-        if (id.contains("Home")) setPlaceholder("Home", "fas-home");
-        else if (id.contains("Dashboard")) setPlaceholder("Dashboard", "fas-th-large");
-        else if (id.contains("Leads")) setPlaceholder("Leads", "fas-bullseye");
-        else if (id.contains("Deals") || id.contains("Opportunities")) setPlaceholder("Opportunities", "fas-handshake");
-        else if (id.contains("Accounts")) setPlaceholder("Accounts", "fas-building");
-        else if (id.contains("Tasks")) setPlaceholder("Tasks", "fas-tasks");
-        else if (id.contains("Settings")) setPlaceholder("Settings", "fas-cog");
+        if (id.contains("Settings")) setPlaceholder("Settings", "fas-cog");
     }
 
     private void setPlaceholder(String title, String icon) {

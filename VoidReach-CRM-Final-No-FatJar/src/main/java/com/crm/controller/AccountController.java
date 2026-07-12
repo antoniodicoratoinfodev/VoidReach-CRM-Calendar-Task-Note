@@ -97,13 +97,13 @@ public final class AccountController {
 
     public void showMenu() {
         if (currentUser == null) return;
-        MenuItem profile = new MenuItem("Profilo e dati account");
+        MenuItem profile = new MenuItem("Profile and account details");
         profile.setOnAction(event -> showProfileDialog());
-        MenuItem security = new MenuItem("Sicurezza: cambia password");
+        MenuItem security = new MenuItem("Security: change password");
         security.setOnAction(event -> showChangePasswordDialog());
-        MenuItem avatar = new MenuItem("Aggiorna icona profilo");
+        MenuItem avatar = new MenuItem("Update profile picture");
         avatar.setOnAction(event -> chooseAvatar());
-        MenuItem logout = new MenuItem("Esci dall'account");
+        MenuItem logout = new MenuItem("Sign out");
         logout.setOnAction(event -> logout());
         new ContextMenu(profile, security, avatar, new SeparatorMenuItem(), logout)
                 .show(accountMenuButton, Side.BOTTOM, 0, 6);
@@ -116,22 +116,22 @@ public final class AccountController {
 
     private void chooseAvatar() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Scegli un'immagine profilo");
+        chooser.setTitle("Choose a profile picture");
         chooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Immagini PNG e JPG", "*.png", "*.jpg", "*.jpeg"));
+                new FileChooser.ExtensionFilter("PNG and JPG images", "*.png", "*.jpg", "*.jpeg"));
         java.io.File selected = chooser.showOpenDialog(accountMenuButton.getScene().getWindow());
         if (selected == null) return;
         Path selectedPath = selected.toPath();
         try {
             if (Files.size(selectedPath) > AvatarImageProcessor.MAX_UPLOAD_BYTES) {
-                dialogService.showError("Immagine troppo grande", "La foto profilo non può superare 10 MB.");
+                dialogService.showError("Image too large", "The profile picture cannot exceed 10 MB.");
                 return;
             }
         } catch (IOException exception) {
-            dialogService.showError("Immagine non valida", "Non è stato possibile leggere il file selezionato.");
+            dialogService.showError("Invalid image", "The selected file could not be read.");
             return;
         }
-        runBackgroundTask("Immagine profilo", "Preparazione dell'immagine...", "Immagine non valida",
+        runBackgroundTask("Profile picture", "Preparing image...", "Invalid image",
                 () -> avatarService.prepareSource(selectedPath), this::showAvatarCropDialog);
     }
 
@@ -220,11 +220,11 @@ public final class AccountController {
             renderer.draw();
         });
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Ritaglia immagine profilo");
+        dialog.setTitle("Crop profile picture");
         themeService.applyTo(dialog);
-        ButtonType save = new ButtonType("Usa questa immagine", ButtonBar.ButtonData.OK_DONE);
+        ButtonType save = new ButtonType("Use this image", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
-        Label help = new Label("Trascina l'immagine per scegliere l'inquadratura. Usa il cursore per ingrandirla.");
+        Label help = new Label("Drag the image to adjust the crop. Use the slider to zoom.");
         help.setWrapText(true);
         help.getStyleClass().add("auth-subtitle");
         VBox content = new VBox(14, help, canvas, new Label("Zoom"), zoom);
@@ -233,7 +233,7 @@ public final class AccountController {
         dialog.getDialogPane().setContent(content);
         if (dialog.showAndWait().filter(result -> result == save).isPresent()) {
             CropSelection crop = renderer.selection();
-            runBackgroundTask("Immagine profilo", "Ottimizzazione dell'avatar...", "Immagine non aggiornata", () -> {
+            runBackgroundTask("Profile picture", "Optimizing profile picture...", "Image not updated", () -> {
                 avatarService.updateAvatar(currentUser, source, crop);
                 return null;
             }, ignored -> refreshAvatar());
@@ -339,14 +339,14 @@ public final class AccountController {
         for (Throwable current = failure; current != null; current = current.getCause()) {
             if (current.getMessage() != null && !current.getMessage().isBlank()) return current.getMessage();
         }
-        return "Non è stato possibile elaborare l'immagine selezionata.";
+        return "The selected image could not be processed.";
     }
 
     private void showProfileDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Profilo e account");
+        dialog.setTitle("Profile and account");
         themeService.applyTo(dialog);
-        ButtonType save = new ButtonType("Salva", ButtonBar.ButtonData.OK_DONE);
+        ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -354,12 +354,12 @@ public final class AccountController {
         TextField name = new TextField(currentUser.getFullName());
         TextField email = new TextField(currentUser.getEmail());
         email.setEditable(false);
-        grid.addRow(0, new Label("Nome:"), name);
+        grid.addRow(0, new Label("Name:"), name);
         grid.addRow(1, new Label("Email:"), email);
         dialog.getDialogPane().setContent(grid);
         if (dialog.showAndWait().filter(result -> result == save).isPresent()) {
             String fullName = name.getText();
-            runBackgroundTask("Profilo e account", "Salvataggio profilo…", "Profilo non salvato", () -> {
+            runBackgroundTask("Profile and account", "Saving profile…", "Profile not saved", () -> {
                 authService.updateProfile(currentUser, fullName);
                 return currentUser.getFullName();
             }, currentUserLabel::setText);
@@ -368,9 +368,9 @@ public final class AccountController {
 
     private void showChangePasswordDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Cambia password");
+        dialog.setTitle("Change password");
         themeService.applyTo(dialog);
-        ButtonType save = new ButtonType("Aggiorna password", ButtonBar.ButtonData.OK_DONE);
+        ButtonType save = new ButtonType("Update password", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -378,16 +378,16 @@ public final class AccountController {
         PasswordField current = new PasswordField();
         PasswordField next = new PasswordField();
         PasswordField confirm = new PasswordField();
-        current.setPromptText("Password attuale");
-        next.setPromptText("Minimo 8 caratteri");
-        confirm.setPromptText("Ripeti la nuova password");
-        grid.addRow(0, new Label("Password attuale:"), current);
-        grid.addRow(1, new Label("Nuova password:"), next);
-        grid.addRow(2, new Label("Conferma password:"), confirm);
+        current.setPromptText("Current password");
+        next.setPromptText("At least 8 characters");
+        confirm.setPromptText("Repeat the new password");
+        grid.addRow(0, new Label("Current password:"), current);
+        grid.addRow(1, new Label("New password:"), next);
+        grid.addRow(2, new Label("Confirm password:"), confirm);
         dialog.getDialogPane().setContent(grid);
         if (dialog.showAndWait().filter(result -> result == save).isEmpty()) return;
         if (!next.getText().equals(confirm.getText())) {
-            dialogService.showError("Password non aggiornata", "Le password non coincidono.");
+            dialogService.showError("Password not updated", "The passwords do not match.");
             return;
         }
         String currentPassword = current.getText();
@@ -395,9 +395,9 @@ public final class AccountController {
         current.clear();
         next.clear();
         confirm.clear();
-        runBackgroundTask("Sicurezza account", "Aggiornamento password…", "Password non aggiornata", () -> {
+        runBackgroundTask("Account security", "Updating password…", "Password not updated", () -> {
             authService.changePassword(currentUser, currentPassword, nextPassword);
             return null;
-        }, ignored -> dialogService.showInfo("Password aggiornata", "La password del tuo account è stata aggiornata."));
+        }, ignored -> dialogService.showInfo("Password updated", "Your account password has been updated."));
     }
 }

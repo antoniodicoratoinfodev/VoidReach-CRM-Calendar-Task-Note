@@ -26,6 +26,7 @@ import javafx.stage.StageStyle;
 
 import java.awt.Taskbar;
 import java.io.InputStream;
+import java.util.Locale;
 import javax.imageio.ImageIO;
 
 public class Main extends Application {
@@ -44,6 +45,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        Locale.setDefault(Locale.ENGLISH);
         this.mainStage = primaryStage;
         configureMacDockIcon();
         showSplashScreen();
@@ -149,7 +151,7 @@ public class Main extends Application {
         loginController.resetForLoginScreen();
 
         // 1. Main Stage Setup
-        mainStage.setTitle("VoidReach CRM — Accesso");
+        mainStage.setTitle("VoidReach CRM — Sign in");
         addAppIcon(mainStage);
         
         Scene scene = new Scene(loginRoot);
@@ -195,7 +197,7 @@ public class Main extends Application {
                 if (remember) sessionService.remember(user);
                 else sessionService.forget();
             } catch (IllegalStateException e) {
-                persistenceWarning = "L'accesso è riuscito, ma non è stato possibile aggiornare la sessione salvata.";
+                persistenceWarning = "Sign-in succeeded, but the saved session could not be updated.";
             }
             showMainApplication(user);
             if (persistenceWarning != null) showPersistenceWarning(persistenceWarning);
@@ -220,12 +222,12 @@ public class Main extends Application {
             mainStage.requestFocus();
             Platform.runLater(controller::requestInitialFocus);
         } catch (Exception e) {
-            throw new IllegalStateException("Impossibile aprire l'applicazione", e);
+            throw new IllegalStateException("The application could not be opened", e);
         }
     }
 
     private void showLoginScreen() {
-        mainStage.setTitle("VoidReach CRM — Accesso");
+        mainStage.setTitle("VoidReach CRM — Sign in");
         // The login scene is retained for the application's lifetime; reset its form state on every logout.
         loginController.resetForLoginScreen();
         configureLoginHandler();
@@ -243,16 +245,16 @@ public class Main extends Application {
     private void logout() {
         String persistenceWarning = null;
         try { sessionService.forget(); }
-        catch (IllegalStateException e) { persistenceWarning = "La sessione salvata non è stata rimossa dal disco."; }
+        catch (IllegalStateException e) { persistenceWarning = "The saved session could not be removed from disk."; }
         showLoginScreen();
         if (persistenceWarning != null) showPersistenceWarning(persistenceWarning);
     }
 
     private void showPersistenceWarning(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Salvataggio locale non riuscito");
+        alert.setTitle("Local save failed");
         alert.setHeaderText(null);
-        alert.setContentText(message + " I dati già aperti restano disponibili in questa sessione.");
+        alert.setContentText(message + " Data already open remains available in this session.");
         alert.showAndWait();
     }
 
@@ -264,12 +266,12 @@ public class Main extends Application {
             if (loginRoot == null || loginController == null) loadLoginView();
             transitionToLogin();
 
-            ButtonType retry = new ButtonType("Riprova avvio", ButtonBar.ButtonData.OK_DONE);
-            ButtonType continueToLogin = new ButtonType("Continua al login", ButtonBar.ButtonData.CANCEL_CLOSE);
+            ButtonType retry = new ButtonType("Retry startup", ButtonBar.ButtonData.OK_DONE);
+            ButtonType continueToLogin = new ButtonType("Continue to sign in", ButtonBar.ButtonData.CANCEL_CLOSE);
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Avvio in modalità recupero");
-            alert.setHeaderText("Non è stato possibile completare il caricamento iniziale.");
-            alert.setContentText("Lo splash è stato chiuso. Puoi accedere manualmente oppure riprovare il caricamento.");
+            alert.setTitle("Recovery startup");
+            alert.setHeaderText("Initial loading could not be completed.");
+            alert.setContentText("The splash screen was closed. You can sign in manually or retry loading.");
             alert.getButtonTypes().setAll(retry, continueToLogin);
             if (alert.showAndWait().filter(retry::equals).isPresent()) retryStartup();
         } catch (Exception recoveryFailure) {
@@ -287,12 +289,12 @@ public class Main extends Application {
 
     private void showUnrecoverableStartupError(Throwable failure, Exception recoveryFailure) {
         if (failure != null) recoveryFailure.addSuppressed(failure);
-        ButtonType retry = new ButtonType("Riprova", ButtonBar.ButtonData.OK_DONE);
-        ButtonType close = new ButtonType("Chiudi", ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType retry = new ButtonType("Retry", ButtonBar.ButtonData.OK_DONE);
+        ButtonType close = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Avvio non riuscito");
-        alert.setHeaderText("Non è stato possibile aprire nemmeno la schermata di accesso.");
-        alert.setContentText("Puoi riprovare. Se il problema continua, conserva i file .bak e .corrupt.properties per il recupero.");
+        alert.setTitle("Startup failed");
+        alert.setHeaderText("Even the sign-in screen could not be opened.");
+        alert.setContentText("You can retry. If the problem persists, keep the .bak and .corrupt.properties files for recovery.");
         alert.getButtonTypes().setAll(retry, close);
         if (alert.showAndWait().filter(retry::equals).isPresent()) retryStartup();
         else Platform.exit();

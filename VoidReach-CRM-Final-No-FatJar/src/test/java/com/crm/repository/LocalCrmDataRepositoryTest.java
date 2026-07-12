@@ -30,6 +30,7 @@ class LocalCrmDataRepositoryTest {
         Contact validContact = new Contact("contact-valid", "Ada", "VoidReach", "CTO", "ada@example.com", "1", "today", "vip", "valid");
         Contact corruptContact = new Contact("contact-corrupt", "Bob", "VoidReach", "CEO", "bob@example.com", "2", "today", "lead", "corrupt me");
         Task validTask = new Task("task-valid", "Call", "Valid", 540, 30, "#112233");
+        validTask.setCompleted(true);
         Task corruptTask = new Task("task-corrupt", "Meeting", "Corrupt me", 600, 45, "#445566");
         Task invalidScheduleTask = new Task("task-invalid-schedule", "Late", "Corrupt schedule", 1200, 30, "#778899");
         Map<LocalDate, List<Task>> tasks = new LinkedHashMap<>();
@@ -53,6 +54,7 @@ class LocalCrmDataRepositoryTest {
         assertEquals("contact-valid", loaded.contacts().getFirst().getId());
         assertEquals(1, loaded.tasksByDate().get(date).size());
         assertEquals("task-valid", loaded.tasksByDate().get(date).getFirst().getId());
+        assertTrue(loaded.tasksByDate().get(date).getFirst().isCompleted());
         assertEquals(date, loaded.selectedDate());
         assertEquals("Week", loaded.calendarViewMode());
         assertEquals(1.0, loaded.calendarZoom());

@@ -7,18 +7,20 @@
 
 <StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
            fx:controller="com.crm.controller.SplashScreenController"
-           prefWidth="450" prefHeight="300" styleClass="splash-container">
+           prefWidth="502" prefHeight="360" styleClass="splash-container">
+    <padding>
+        <Insets top="24" right="26" bottom="36" left="26"/>
+    </padding>
     
     <!-- Background con gradiente e bordi arrotondati (gestito via CSS) -->
-    <VBox alignment="CENTER" spacing="25" styleClass="splash-content">
+    <VBox minWidth="450" prefWidth="450" maxWidth="450"
+          minHeight="300" prefHeight="300" maxHeight="300"
+          alignment="CENTER" spacing="25" styleClass="splash-content">
         <padding>
             <Insets top="40" right="40" bottom="40" left="40"/>
         </padding>
 
         <StackPane>
-            <!-- Effetto glow dietro il logo -->
-            <Rectangle fx:id="logoGlow" width="100" height="100" arcWidth="50" arcHeight="50" 
-                       fill="#3b82f6" opacity="0.15" style="-fx-effect: dropshadow(three-pass-box, #3b82f6, 40, 0, 0, 0);"/>
             <ImageView fx:id="logoView" fitHeight="90" fitWidth="90" pickOnBounds="true" preserveRatio="true">
                 <Image url="@/images/app-icon.png"/>
             </ImageView>

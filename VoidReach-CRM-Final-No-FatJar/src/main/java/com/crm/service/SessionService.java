@@ -28,10 +28,10 @@ public class SessionService {
     public void remember(UserAccount user) {
         Properties properties = new Properties(); properties.setProperty(AtomicPropertiesStore.SCHEMA_VERSION_KEY, String.valueOf(SCHEMA_VERSION)); properties.setProperty(AtomicPropertiesStore.FILE_TYPE_KEY, FILE_TYPE); properties.setProperty("email", user.getEmail());
         try { AtomicPropertiesStore.store(file, properties, "VoidReach CRM remembered session"); }
-        catch (IOException e) { throw new IllegalStateException("Impossibile salvare la sessione", e); }
+        catch (IOException e) { throw new IllegalStateException("The session could not be saved", e); }
     }
     public void forget() {
         try { Files.deleteIfExists(file); }
-        catch (IOException e) { throw new IllegalStateException("Impossibile chiudere la sessione", e); }
+        catch (IOException e) { throw new IllegalStateException("The session could not be closed", e); }
     }
 }

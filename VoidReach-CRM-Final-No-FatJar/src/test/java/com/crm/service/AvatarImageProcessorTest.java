@@ -31,7 +31,7 @@ class AvatarImageProcessorTest {
                 () -> AvatarImageProcessor.validateFileSize(
                         AvatarImageProcessor.MAX_UPLOAD_BYTES + 1));
 
-        assertEquals("La foto profilo non può superare 10 MB.", failure.getMessage());
+        assertEquals("The profile picture cannot exceed 10 MB.", failure.getMessage());
     }
 
     @Test

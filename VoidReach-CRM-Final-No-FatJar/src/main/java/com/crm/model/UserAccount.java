@@ -13,6 +13,7 @@ public class UserAccount {
     private String resetCodeHash;
     private Instant resetCodeExpiresAt;
     private String avatarFileName;
+    private String preferredTheme = "DARK";
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -32,4 +33,6 @@ public class UserAccount {
     public void setResetCodeExpiresAt(Instant resetCodeExpiresAt) { this.resetCodeExpiresAt = resetCodeExpiresAt; }
     public String getAvatarFileName() { return avatarFileName; }
     public void setAvatarFileName(String avatarFileName) { this.avatarFileName = avatarFileName; }
+    public String getPreferredTheme() { return preferredTheme; }
+    public void setPreferredTheme(String preferredTheme) { this.preferredTheme = preferredTheme; }
 }

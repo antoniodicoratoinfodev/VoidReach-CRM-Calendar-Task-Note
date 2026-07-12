@@ -6,11 +6,15 @@ import com.crm.service.ThemeService;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.geometry.Point2D;
+import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -22,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -63,6 +68,7 @@ public final class CalendarController {
     private PauseTransition resizeDebounce;
     private boolean calendarOpening;
     private boolean applyingState;
+    private Scene shortcutScene;
     private String viewMode = "Day";
     private LocalDate weekStartDate;
     private YearMonth currentMiniMonth;
@@ -135,6 +141,40 @@ public final class CalendarController {
     public String viewMode() { return viewMode; }
     public double zoom() { return zoom; }
 
+    public void createTask(LocalDate date) {
+        selectDate(date == null ? LocalDate.now() : date);
+        int start = Math.min(23 * 60, Math.max(0, (java.time.LocalTime.now().getHour() + 1) * 60));
+        showTaskDialog(null, start, Math.min(60, Task.MINUTES_PER_DAY - start), "");
+    }
+
+    public void editTask(LocalDate date, Task task) {
+        if (date == null || task == null) return;
+        selectDate(date);
+        showTaskDialog(task, task.getStartMin(), task.getDuration(), task.getDescription());
+    }
+
+    public void deleteTask(LocalDate date, Task task) {
+        if (date == null || task == null) return;
+        removeTask(date, task);
+        render();
+        updateSidebar();
+        notifyDataChanged();
+    }
+
+    public void setTaskCompleted(LocalDate date, Task task, boolean completed) {
+        if (date == null || task == null || task.isCompleted() == completed) return;
+        task.setCompleted(completed);
+        render();
+        updateSidebar();
+        notifyDataChanged();
+    }
+
+    public void showTaskInCalendar(LocalDate date) {
+        if (date == null) return;
+        selectDate(date);
+        showCalendar.run();
+    }
+
     public void refreshTheme() {
         render();
         updateSidebar();
@@ -183,20 +223,16 @@ public final class CalendarController {
                 resizeDebounce.playFromStart();
             }
         });
-        timelineArea.setOnScroll(event -> {
+        scrollPane.addEventFilter(ScrollEvent.SCROLL, event -> {
+            if (!calendarView.isVisible()) return;
             if (!event.isControlDown() && !event.isMetaDown()) return;
             event.consume();
-            if (event.getDeltaY() > 0) handleZoom(true, event.getY());
-            else if (event.getDeltaY() < 0) handleZoom(false, event.getY());
-        });
-        timelineArea.setOnKeyPressed(event -> {
-            if ((event.isControlDown() || event.isMetaDown()) && event.getCode() == KeyCode.DIGIT0) {
-                event.consume();
-                applyZoom(DEFAULT_ZOOM, viewportCenterContentY());
-                timelineArea.requestFocus();
-            }
+            Point2D pivot = timelineArea.sceneToLocal(event.getSceneX(), event.getSceneY());
+            if (event.getDeltaY() > 0) handleZoom(true, pivot.getY());
+            else if (event.getDeltaY() < 0) handleZoom(false, pivot.getY());
         });
         timelineArea.setFocusTraversable(true);
+        installShortcutFilterWhenSceneReady();
         calendarView.visibleProperty().addListener((observable, oldValue, visible) -> {
             if (visible) {
                 calendarOpening = true;
@@ -208,6 +244,26 @@ public final class CalendarController {
                 resizeDebounce.stop();
             }
         });
+    }
+
+    private void installShortcutFilterWhenSceneReady() {
+        calendarView.sceneProperty().addListener((observable, oldScene, newScene) -> {
+            if (oldScene != null) oldScene.removeEventFilter(KeyEvent.KEY_PRESSED, this::handleCalendarShortcut);
+            shortcutScene = newScene;
+            if (newScene != null) newScene.addEventFilter(KeyEvent.KEY_PRESSED, this::handleCalendarShortcut);
+        });
+        if (calendarView.getScene() != null) {
+            shortcutScene = calendarView.getScene();
+            shortcutScene.addEventFilter(KeyEvent.KEY_PRESSED, this::handleCalendarShortcut);
+        }
+    }
+
+    private void handleCalendarShortcut(KeyEvent event) {
+        if (!calendarView.isVisible() || !calendarView.isHover()) return;
+        if ((event.isControlDown() || event.isMetaDown()) && event.getCode() == KeyCode.DIGIT0) {
+            event.consume();
+            applyZoom(DEFAULT_ZOOM, viewportCenterContentY());
+        }
     }
 
     private void handleZoom(boolean zoomIn, double pivotContentY) {
@@ -337,9 +393,12 @@ public final class CalendarController {
 
     private void drawTimelineGrid(Canvas canvas, double width, double hourHeight, double minuteHeight) {
         GraphicsContext graphics = canvas.getGraphicsContext2D();
-        Color hourColor = Color.web(themeService.isDarkMode() ? "#4a5568" : "#cbd5e1");
-        Color intervalColor = Color.web(themeService.isDarkMode() ? "#2d3748" : "#f1f5f9");
-        Color weekDivider = Color.web(themeService.isDarkMode() ? "#334155" : "#e2e8f0");
+        Color hourColor = Color.web(themeService.isBlueGrayTheme() ? "#43516a"
+                : themeService.isDarkMode() ? "#2a3a52" : "#dbe2ea");
+        Color intervalColor = Color.web(themeService.isBlueGrayTheme() ? "#2e3b52"
+                : themeService.isDarkMode() ? "#18243a" : "#edf1f5");
+        Color weekDivider = Color.web(themeService.isBlueGrayTheme() ? "#3a4961"
+                : themeService.isDarkMode() ? "#263449" : "#e5eaf1");
         graphics.setLineWidth(1);
         for (int hour = 0; hour <= 24; hour++) {
             double hourY = hour * hourHeight;
@@ -408,6 +467,7 @@ public final class CalendarController {
     private void renderTask(Task task, double minuteHeight, double widthPercent, int dayOffset, double margin) {
         VBox box = new VBox();
         box.getStyleClass().addAll("task-entry", "task-" + task.getColor().toLowerCase());
+        if (task.isCompleted()) box.getStyleClass().add("task-entry-completed");
         double width = timelineWidth();
         double dayWidth = width * widthPercent;
         AnchorPane.setLeftAnchor(box, dayOffset * dayWidth + margin);
@@ -507,7 +567,7 @@ public final class CalendarController {
 
     private void updateSidebar() {
         updateSelectedPeriodLabel();
-        miniMonthYearLabel.setText(currentMiniMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")));
+        miniMonthYearLabel.setText(currentMiniMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)));
         miniCalendarGrid.getChildren().clear();
         String[] days = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
         for (int index = 0; index < days.length; index++) {
@@ -522,22 +582,20 @@ public final class CalendarController {
             Button day = new Button(String.valueOf(index + 1));
             day.getStyleClass().add("calendar-day");
             if (date.equals(datePicker.getValue())) {
-                day.setStyle("-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-background-radius: 50%;");
+                day.getStyleClass().add("calendar-day-selected");
             } else if (date.equals(LocalDate.now())) {
-                day.setStyle("-fx-border-color: #3b82f6; -fx-border-radius: 50%;"
-                        + (themeService.isDarkMode() ? " -fx-text-fill: #cbd5e1;" : ""));
+                day.getStyleClass().add("calendar-day-today");
             }
             day.setOnAction(event -> { datePicker.setValue(date); showCalendar.run(); });
             miniCalendarGrid.add(day, (index + dayOffset) % 7, (index + dayOffset) / 7 + 1);
         }
         upcomingActivitiesList.getChildren().clear();
         boolean weekView = "Week".equals(viewMode);
-        activitiesTitle.setText(weekView ? "Activities for Selected Week" : "Activities for Selected Day");
+        activitiesTitle.setText(weekView ? "This week's tasks" : "Today's tasks");
         List<SidebarTask> tasks = sidebarTasks(weekView);
         if (tasks.isEmpty()) {
-            Label empty = new Label(weekView ? "No activities for this week." : "No activities for this day.");
-            empty.setStyle("-fx-font-style: italic; -fx-padding: 10; -fx-text-fill: "
-                    + (themeService.isDarkMode() ? "#64748b;" : "#94a3b8;"));
+            Label empty = new Label(weekView ? "No tasks this week." : "No tasks for this day.");
+            empty.getStyleClass().add("empty-activities");
             upcomingActivitiesList.getChildren().add(empty);
             return;
         }
@@ -550,14 +608,19 @@ public final class CalendarController {
                     (task.getStartMin() + task.getDuration()) % 60));
             time.getStyleClass().add("activity-time");
             String titleText = weekView
-                    ? sidebarTask.date().format(DateTimeFormatter.ofPattern("EEEE d")) + " " + task.getTitle()
+                    ? sidebarTask.date().format(DateTimeFormatter.ofPattern("EEEE d", Locale.ENGLISH)) + " " + task.getTitle()
                     : task.getTitle();
             Label title = new Label(titleText);
             title.getStyleClass().add("activity-title");
             item.getChildren().addAll(time, title);
             item.setOnMouseClicked(event -> {
-                if (weekView) selectDate(sidebarTask.date());
+                boolean openRequest = event.getButton() == MouseButton.SECONDARY
+                        || event.getButton() == MouseButton.PRIMARY && event.getClickCount() >= 1;
+                if (!openRequest) return;
+                selectDate(sidebarTask.date());
                 showCalendar.run();
+                showTaskDialog(task, task.getStartMin(), task.getDuration(), task.getDescription());
+                event.consume();
             });
             upcomingActivitiesList.getChildren().add(item);
         }
@@ -567,10 +630,10 @@ public final class CalendarController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         if ("Week".equals(viewMode)) {
             LocalDate start = weekStartDate;
-            selectedPeriodLabel.setText("La settimana selezionata: " + formatter.format(start)
+            selectedPeriodLabel.setText("Selected week: " + formatter.format(start)
                     + " - " + formatter.format(start.plusDays(6)));
         } else {
-            selectedPeriodLabel.setText("Il giorno selezionato: " + formatter.format(datePicker.getValue()));
+            selectedPeriodLabel.setText("Selected day: " + formatter.format(datePicker.getValue()));
         }
     }
 
@@ -667,7 +730,7 @@ public final class CalendarController {
                 Task replacement = existingTask == null
                         ? new Task(title.getText(), description.getText(), newStart, newEnd - newStart, color.getValue())
                         : new Task(existingTask.getId(), title.getText(), description.getText(), newStart,
-                                newEnd - newStart, color.getValue());
+                                newEnd - newStart, color.getValue(), existingTask.isCompleted());
                 if (existingTask != null) removeTask(sourceDate, existingTask);
                 addTask(targetDate, replacement);
                 dateToDisplay = targetDate;
