@@ -115,7 +115,7 @@
                             <options>
                                 <option>--enable-native-access=javafx.graphics</option>
                                 <option>-Xdock:name=VoidReach</option>
-                                <option>-Xdock:icon=src/main/resources/images/app-icon.png</option>
+                                <option>-Xdock:icon=src/main/packaging/macos/VoidReach.icns</option>
                                 <option>-Dapple.awt.application.name=VoidReach</option>
                                 <option>-Dcom.apple.mrj.application.apple.menu.about.name=VoidReach</option>
                             </options>

@@ -108,6 +108,19 @@ cd VoidReach-CRM-Final-No-FatJar
 
 The project can also be imported into IntelliJ IDEA as a Maven project by selecting the `pom.xml` file inside the `VoidReach-CRM-Final-No-FatJar` module.
 
+## Native packages
+
+The application icon is kept as a transparent 512×512 PNG for JavaFX. Native packages use platform-specific, multi-resolution files: `src/main/packaging/macos/VoidReach.icns` (macOS) and `src/main/packaging/windows/VoidReach.ico` (Windows).
+
+Create a native app image on its target operating system:
+
+```bash
+cd VoidReach-CRM-Final-No-FatJar
+./scripts/package-macos.sh
+```
+
+On Windows, run `scripts/package-windows.ps1` from PowerShell. Both scripts write only under `target/packages/`; run the test suite separately before publishing a package.
+
 ## Tests
 
 To run the unit tests:
@@ -136,6 +149,9 @@ VoidReach-CRM-Calendar-Task/
 └── VoidReach-CRM-Final-No-FatJar/
     ├── pom.xml
     ├── run.sh
+    ├── scripts/
+    │   ├── package-macos.sh                         # macOS app-image with VoidReach.icns
+    │   └── package-windows.ps1                      # Windows app-image with VoidReach.ico
     └── src/
         ├── main/
         │   ├── java/com/crm/
@@ -171,6 +187,9 @@ VoidReach-CRM-Calendar-Task/
         │   │       ├── DialogService.java            # Themed application alerts
         │   │       ├── SessionService.java           # Remembered session
         │   │       └── ThemeService.java             # Scene and dialog theme management
+        │   ├── packaging/
+        │   │   ├── macos/VoidReach.icns              # Native macOS icon (16–512 px)
+        │   │   └── windows/VoidReach.ico             # Native Windows icon (16–256 px)
         │   └── resources/
         │       ├── com/crm/view/
         │       │   ├── LoginView.fxml                # Authentication views
