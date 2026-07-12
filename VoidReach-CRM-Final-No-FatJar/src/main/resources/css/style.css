@@ -114,7 +114,9 @@
 /* Spazio dell'intestazione sopra la scrollbar verticale */
 .table-view .column-header-background .filler {
     -fx-background-color: #f1f5f9;
+    -fx-background-radius: 0 12 0 0;
     -fx-border-color: #e2e8f0;
+    -fx-border-radius: 0 12 0 0;
     -fx-border-width: 0 0 1 0;
 }
 
