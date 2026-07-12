@@ -493,29 +493,23 @@ public final class CalendarController {
         Label description = new Label(task.getDescription());
         description.getStyleClass().add("task-desc");
         List<Note> linkedNotes = noteIntegration.notesForTask(task.getId());
-        javafx.scene.Node noteLink = null;
+        FlowPane noteLinks = null;
         if (!linkedNotes.isEmpty()) {
-            if (linkedNotes.size() == 1) {
-                Note linked = linkedNotes.getFirst();
-                Button openNote = new Button("Open note");
+            noteLinks = new FlowPane(4, 2);
+            noteLinks.getStyleClass().add("calendar-note-links");
+            double maximumLinkWidth = Math.max(48, dayWidth - margin * 4);
+            for (Note linked : linkedNotes) {
+                String noteTitle = linked.getTitle().isBlank() ? "Untitled note" : linked.getTitle();
+                Button openNote = new Button(noteTitle);
                 openNote.getStyleClass().add("calendar-note-link");
                 openNote.setFocusTraversable(false);
+                openNote.setMaxWidth(maximumLinkWidth);
+                openNote.setTextOverrun(OverrunStyle.ELLIPSIS);
+                openNote.setTooltip(new Tooltip("Open note: " + noteTitle));
                 openNote.setOnAction(event -> noteIntegration.openNote(linked.getId()));
                 openNote.setOnMousePressed(javafx.event.Event::consume);
                 openNote.setOnMouseReleased(javafx.event.Event::consume);
-                noteLink = openNote;
-            } else {
-                MenuButton linkMenu = new MenuButton(linkedNotes.size() + " notes");
-                linkMenu.getStyleClass().add("calendar-note-link");
-                linkMenu.setFocusTraversable(false);
-                linkedNotes.forEach(linked -> {
-                    MenuItem item = new MenuItem(linked.getTitle().isBlank() ? "Untitled note" : linked.getTitle());
-                    item.setOnAction(event -> noteIntegration.openNote(linked.getId()));
-                    linkMenu.getItems().add(item);
-                });
-                linkMenu.setOnMousePressed(javafx.event.Event::consume);
-                linkMenu.setOnMouseReleased(javafx.event.Event::consume);
-                noteLink = linkMenu;
+                noteLinks.getChildren().add(openNote);
             }
         }
         Region spacer = new Region();
@@ -598,7 +592,7 @@ public final class CalendarController {
             notifyDataChanged();
         });
         box.getChildren().addAll(title, time, description);
-        if (noteLink != null) box.getChildren().add(noteLink);
+        if (noteLinks != null) box.getChildren().add(noteLinks);
         box.getChildren().addAll(spacer, resizer);
         timelineArea.getChildren().add(box);
     }

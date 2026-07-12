@@ -550,6 +550,7 @@
     -fx-background-color: #ffffff; -fx-border-color: #e5eaf1; -fx-border-width: 0 0 1 0;
     -fx-padding: 0 26;
 }
+.navbar-status-group { -fx-translate-y: 4; }
 .topbar-title { -fx-text-fill: #334155; -fx-font-size: 13px; -fx-font-weight: 700; }
 .save-status { -fx-text-fill: #94a3b8; -fx-font-size: 11px; }
 .toolbar-icon { -fx-icon-color: #64748b; }
@@ -986,4 +987,5 @@
     -fx-background-color: transparent; -fx-text-fill: #2563eb; -fx-font-size: 9px;
     -fx-font-weight: 700; -fx-padding: 2 5; -fx-cursor: hand;
 }
+.calendar-note-links { -fx-padding: 2 0 1 0; }
 .calendar-note-link:hover, .activity-note-link:hover, .dialog-note-link:hover, .task-note-link:hover { -fx-background-color: #dbeafe; -fx-background-radius: 6; }

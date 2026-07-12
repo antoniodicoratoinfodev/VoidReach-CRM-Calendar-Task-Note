@@ -61,7 +61,7 @@
     <center>
         <VBox styleClass="main-surface">
             <HBox minHeight="72" prefHeight="72" alignment="CENTER_LEFT" spacing="16" styleClass="navbar">
-                <VBox spacing="2">
+                <VBox spacing="2" alignment="CENTER_LEFT" styleClass="navbar-status-group">
                     <Label text="Your workspace" styleClass="topbar-title"/>
                     <Label fx:id="saveStatusLabel" text="" styleClass="save-status"/>
                 </VBox>

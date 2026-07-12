@@ -100,7 +100,7 @@ Dashboard values update whenever contacts or tasks change.
 - `Ctrl+0`/`Cmd+0` restores 100% zoom while the pointer is over the calendar.
 - Selected date, Day/Week mode, and zoom level are restored from the saved workspace.
 
-Tasks with one linked note display an **Open note** control directly on calendar entries and in the agenda; selecting it opens that note's editor in the Notes section. Tasks with multiple linked notes display a compact choice menu. Linked notes are also available in the task-edit dialog.
+Calendar entries display the title of every linked note directly inside the task. Selecting a title opens that specific note's editor in the Notes section; long titles are shortened visually and remain available in a tooltip. Linked notes are also available in the agenda and task-edit dialog.
 
 ### Tasks
 
