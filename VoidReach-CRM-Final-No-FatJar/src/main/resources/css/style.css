@@ -503,6 +503,11 @@
     -fx-border-color: #e2e8f0;
     -fx-border-width: 0 1 1 0;
 }
+.week-time-header {
+    -fx-background-color: #f1f5f9;
+    -fx-border-color: transparent #e2e8f0 #e2e8f0 transparent;
+    -fx-border-width: 0 1 1 0;
+}
 
 .week-day-column {
     -fx-border-color: #e2e8f0;
@@ -663,11 +668,39 @@
 .calendar-hint { -fx-text-fill: #94a3b8; -fx-font-size: 11px; }
 .segmented-navigation { -fx-background-color: #f1f5f9; -fx-background-radius: 8; -fx-padding: 2; }
 .segment-button { -fx-min-width: 32; -fx-pref-width: 32; -fx-min-height: 32; -fx-pref-height: 32; }
-.calendar-scroll {
-    -fx-background: #ffffff; -fx-background-color: #ffffff;
-    -fx-border-color: #e5eaf1; -fx-border-radius: 12; -fx-background-radius: 12;
+.calendar-surface {
+    -fx-background-color: #fbfcfe; -fx-background-radius: 14;
+    -fx-border-color: #dbe2ea; -fx-border-radius: 14; -fx-border-width: 1; -fx-padding: 1;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0.08, 0, 2);
 }
-.calendar-scroll > .viewport, .time-column, .timeline-area { -fx-background-color: #ffffff; }
+.calendar-scroll {
+    -fx-background: #fbfcfe; -fx-background-color: #fbfcfe;
+    -fx-border-color: transparent; -fx-background-radius: 13;
+    -fx-padding: 0;
+}
+.calendar-scroll > .viewport {
+    -fx-background-color: #fbfcfe; -fx-background-radius: 13;
+}
+.calendar-scroll .corner { -fx-background-color: #fbfcfe; }
+.calendar-scroll .scroll-bar:vertical { -fx-padding: 5 2 5 0; }
+.calendar-scroll .scroll-bar:vertical .increment-button,
+.calendar-scroll .scroll-bar:vertical .decrement-button {
+    -fx-min-height: 0; -fx-pref-height: 0; -fx-max-height: 0; -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+.calendar-scroll .scroll-bar:vertical .increment-arrow,
+.calendar-scroll .scroll-bar:vertical .decrement-arrow { -fx-padding: 0; }
+.time-column {
+    -fx-background-color: #f7f9fc;
+    -fx-border-color: transparent #dbe2ea transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+.timeline-area { -fx-background-color: #fbfcfe; }
+.week-time-header {
+    -fx-background-color: #f1f5f9;
+    -fx-border-color: transparent #dbe2ea #dbe2ea transparent;
+    -fx-border-width: 0 1 1 0;
+}
 .hour-label { -fx-text-fill: #64748b; -fx-font-size: 11px; -fx-font-weight: 700; }
 .sub-hour-label { -fx-text-fill: #cbd5e1; -fx-font-size: 9px; }
 .timeline-line { -fx-stroke: #edf1f5; }

@@ -22,6 +22,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Popup;
 import javafx.util.Duration;
 
@@ -49,6 +50,8 @@ public final class CalendarController {
     private static final double DEFAULT_ZOOM = 1.0;
     private static final double TIME_COLUMN_WIDTH = 65.0;
     private static final double MIN_TIMELINE_WIDTH = 320.0;
+    private static final double DAY_TOP_INSET = 12.0;
+    private static final double WEEK_HEADER_HEIGHT = 36.0;
 
     private final VBox calendarView;
     private final AnchorPane timeLabelsContainer;
@@ -114,10 +117,20 @@ public final class CalendarController {
         datePicker.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) refreshForSelectedDate(newValue);
         });
+        installCalendarContentClip();
         setupViewModeCombo();
         setupZoomControls();
         render();
         updateSidebar();
+    }
+
+    private void installCalendarContentClip() {
+        Rectangle clip = new Rectangle();
+        clip.setArcWidth(26);
+        clip.setArcHeight(26);
+        clip.widthProperty().bind(scrollPane.widthProperty());
+        clip.heightProperty().bind(scrollPane.heightProperty());
+        scrollPane.setClip(clip);
     }
 
     public void setNoteIntegration(NoteIntegration noteIntegration) {
@@ -311,7 +324,8 @@ public final class CalendarController {
         Platform.runLater(() -> {
             double newScrollableHeight = Math.max(0, calendarContentHeight() - viewportHeight);
             if (newScrollableHeight > 0) {
-                double newScrollY = stablePivotContentY * scaleFactor - pivotViewportY;
+                double topInset = timelineTopInset();
+                double newScrollY = topInset + (stablePivotContentY - topInset) * scaleFactor - pivotViewportY;
                 scrollPane.setVvalue(clamp(newScrollY / newScrollableHeight, 0, 1));
             } else scrollPane.setVvalue(0);
             scrollPane.setHvalue(0);
@@ -337,6 +351,10 @@ public final class CalendarController {
         if (viewportWidth <= 0) viewportWidth = scrollPane.getWidth();
         if (viewportWidth <= 0) return 1000;
         return Math.max(MIN_TIMELINE_WIDTH, viewportWidth - TIME_COLUMN_WIDTH);
+    }
+
+    private double timelineTopInset() {
+        return viewMode.equals("Week") ? WEEK_HEADER_HEIGHT : DAY_TOP_INSET;
     }
 
     private double clamp(double value, double min, double max) {
@@ -377,7 +395,8 @@ public final class CalendarController {
         double zoomedHourHeight = HOUR_HEIGHT * zoom;
         double zoomedMinuteHeight = MINUTE_HEIGHT * zoom;
         double width = timelineWidth();
-        double height = 24 * zoomedHourHeight + 20;
+        double topInset = timelineTopInset();
+        double height = topInset + 24 * zoomedHourHeight + 12;
         timeLabelsContainer.setPrefHeight(height);
         timelineArea.setPrefHeight(height);
         timelineArea.setMinWidth(width);
@@ -385,19 +404,28 @@ public final class CalendarController {
         timelineArea.setMaxWidth(width);
         Canvas grid = new Canvas(width, height);
         grid.setMouseTransparent(true);
-        drawTimelineGrid(grid, width, zoomedHourHeight, zoomedMinuteHeight);
+        drawTimelineGrid(grid, width, zoomedHourHeight, zoomedMinuteHeight, topInset);
         timelineArea.getChildren().add(grid);
+        if (viewMode.equals("Week")) {
+            Region cornerHeader = new Region();
+            cornerHeader.getStyleClass().add("week-time-header");
+            cornerHeader.setPrefHeight(topInset);
+            AnchorPane.setTopAnchor(cornerHeader, 0.0);
+            AnchorPane.setLeftAnchor(cornerHeader, 0.0);
+            AnchorPane.setRightAnchor(cornerHeader, 0.0);
+            timeLabelsContainer.getChildren().add(cornerHeader);
+        }
         for (int hour = 0; hour <= 24; hour++) {
             double hourY = hour * zoomedHourHeight;
             Label hourLabel = new Label(String.format("%02d:00", hour));
             hourLabel.getStyleClass().add("hour-label");
             AnchorPane.setRightAnchor(hourLabel, 10.0);
-            AnchorPane.setTopAnchor(hourLabel, hourY - 10);
+            AnchorPane.setTopAnchor(hourLabel, topInset + hourY - 10);
             timeLabelsContainer.getChildren().add(hourLabel);
-            if (hour < 24) addSubHourLabels(hour, hourY, zoomedMinuteHeight);
+            if (hour < 24) addSubHourLabels(hour, topInset + hourY, zoomedMinuteHeight);
         }
-        if (viewMode.equals("Day")) renderDayView(zoomedMinuteHeight);
-        else renderWeekView(width, zoomedMinuteHeight);
+        if (viewMode.equals("Day")) renderDayView(zoomedMinuteHeight, topInset);
+        else renderWeekView(width, zoomedMinuteHeight, topInset);
     }
 
     private void addSubHourLabels(int hour, double hourY, double zoomedMinuteHeight) {
@@ -415,7 +443,8 @@ public final class CalendarController {
         }
     }
 
-    private void drawTimelineGrid(Canvas canvas, double width, double hourHeight, double minuteHeight) {
+    private void drawTimelineGrid(Canvas canvas, double width, double hourHeight, double minuteHeight,
+                                  double topInset) {
         GraphicsContext graphics = canvas.getGraphicsContext2D();
         Color hourColor = Color.web(themeService.isBlueGrayTheme() ? "#43516a"
                 : themeService.isDarkMode() ? "#2a3a52" : "#dbe2ea");
@@ -425,7 +454,7 @@ public final class CalendarController {
                 : themeService.isDarkMode() ? "#263449" : "#e5eaf1");
         graphics.setLineWidth(1);
         for (int hour = 0; hour <= 24; hour++) {
-            double hourY = hour * hourHeight;
+            double hourY = topInset + hour * hourHeight;
             graphics.setGlobalAlpha(1);
             graphics.setStroke(hourColor);
             graphics.strokeLine(0, hourY, width, hourY);
@@ -443,34 +472,39 @@ public final class CalendarController {
             double dayWidth = width / 7.0;
             graphics.setGlobalAlpha(1);
             graphics.setStroke(weekDivider);
-            for (int day = 1; day < 7; day++) graphics.strokeLine(day * dayWidth, 0, day * dayWidth, 24 * hourHeight);
+            for (int day = 1; day < 7; day++) {
+                graphics.strokeLine(day * dayWidth, topInset, day * dayWidth, topInset + 24 * hourHeight);
+            }
         }
         graphics.setGlobalAlpha(1);
     }
 
-    private void renderDayView(double minuteHeight) {
+    private void renderDayView(double minuteHeight, double topInset) {
         timelineArea.setOnMouseClicked(event -> {
             if (event.getClickCount() == 1 && event.getTarget() == timelineArea
                     && event.getButton() == MouseButton.PRIMARY) {
-                showNewTaskDialogAt((int) (event.getY() / minuteHeight));
+                showNewTaskDialogAt((int) ((event.getY() - topInset) / minuteHeight));
             }
         });
         for (Task task : tasksByDate.getOrDefault(datePicker.getValue(), List.of())) {
-            renderTask(task, minuteHeight, 1.0, 0, 10.0);
+            renderTask(task, minuteHeight, 1.0, 0, 10.0, topInset);
         }
     }
 
-    private void renderWeekView(double width, double minuteHeight) {
+    private void renderWeekView(double width, double minuteHeight, double topInset) {
         double dayWidth = width / 7.0;
         for (int day = 0; day < 7; day++) {
             LocalDate date = weekStartDate.plusDays(day);
             Label header = new Label(date.format(DateTimeFormatter.ofPattern("EEE dd/MM")));
             header.getStyleClass().add("week-day-header");
             header.setPrefWidth(dayWidth);
+            header.setPrefHeight(topInset);
             header.setLayoutX(day * dayWidth);
             header.setLayoutY(0);
             timelineArea.getChildren().add(header);
-            for (Task task : tasksByDate.getOrDefault(date, List.of())) renderTask(task, minuteHeight, 1.0 / 7.0, day, 5.0);
+            for (Task task : tasksByDate.getOrDefault(date, List.of())) {
+                renderTask(task, minuteHeight, 1.0 / 7.0, day, 5.0, topInset);
+            }
         }
         timelineArea.setOnMouseClicked(event -> {
             if (event.getClickCount() != 1 || event.getTarget() != timelineArea
@@ -478,7 +512,7 @@ public final class CalendarController {
             int dayOffset = (int) (event.getX() / dayWidth);
             if (dayOffset >= 0 && dayOffset < 7) {
                 datePicker.setValue(weekStartDate.plusDays(dayOffset));
-                showNewTaskDialogAt((int) (event.getY() / minuteHeight));
+                showNewTaskDialogAt((int) ((event.getY() - topInset) / minuteHeight));
             }
         });
     }
@@ -488,14 +522,15 @@ public final class CalendarController {
         showTaskDialog(null, start, Math.min(60, Task.MINUTES_PER_DAY - start), "");
     }
 
-    private void renderTask(Task task, double minuteHeight, double widthPercent, int dayOffset, double margin) {
+    private void renderTask(Task task, double minuteHeight, double widthPercent, int dayOffset, double margin,
+                            double topInset) {
         VBox box = new VBox();
         box.getStyleClass().addAll("task-entry", "task-" + task.getColor().toLowerCase());
         if (task.isCompleted()) box.getStyleClass().add("task-entry-completed");
         double width = timelineWidth();
         double dayWidth = width * widthPercent;
         AnchorPane.setLeftAnchor(box, dayOffset * dayWidth + margin);
-        AnchorPane.setTopAnchor(box, task.getStartMin() * minuteHeight);
+        AnchorPane.setTopAnchor(box, topInset + task.getStartMin() * minuteHeight);
         box.setPrefWidth(dayWidth - margin * 2);
         box.setPrefHeight(task.getDuration() * minuteHeight);
         Label title = new Label(task.getTitle());
@@ -555,9 +590,9 @@ public final class CalendarController {
         });
         box.setOnMouseDragged(event -> {
             if (!event.isPrimaryButtonDown()) return;
-            int proposed = (int) ((dragInitialTop + event.getSceneY() - dragAnchorY) / minuteHeight);
+            int proposed = (int) ((dragInitialTop + event.getSceneY() - dragAnchorY - topInset) / minuteHeight);
             task.setStartMin(Math.max(0, Math.min(Task.MINUTES_PER_DAY - task.getDuration(), proposed)));
-            AnchorPane.setTopAnchor(box, task.getStartMin() * minuteHeight);
+            AnchorPane.setTopAnchor(box, topInset + task.getStartMin() * minuteHeight);
             if (viewMode.equals("Week")) {
                 double weekDayWidth = timelineWidth() / 7.0;
                 double x = dayOffset * weekDayWidth + event.getSceneX() - dragAnchorX;

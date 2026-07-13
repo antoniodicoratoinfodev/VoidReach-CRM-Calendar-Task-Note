@@ -300,12 +300,14 @@
                         <Region HBox.hgrow="ALWAYS"/>
                         <Label text="Ctrl/⌘ + mouse wheel to zoom" styleClass="calendar-hint"/>
                     </HBox>
-                    <ScrollPane fx:id="calendarScrollPane" fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" styleClass="calendar-scroll">
-                        <HBox spacing="0">
-                            <AnchorPane fx:id="timeLabelsContainer" prefWidth="72" minWidth="72" maxWidth="72" styleClass="time-column"/>
-                            <AnchorPane fx:id="calendarTimelineArea" prefWidth="1000" prefHeight="1440" HBox.hgrow="ALWAYS" styleClass="timeline-area"/>
-                        </HBox>
-                    </ScrollPane>
+                    <StackPane styleClass="calendar-surface" VBox.vgrow="ALWAYS">
+                        <ScrollPane fx:id="calendarScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="calendar-scroll">
+                            <HBox spacing="0">
+                                <AnchorPane fx:id="timeLabelsContainer" prefWidth="72" minWidth="72" maxWidth="72" styleClass="time-column"/>
+                                <AnchorPane fx:id="calendarTimelineArea" prefWidth="1000" prefHeight="1440" HBox.hgrow="ALWAYS" styleClass="timeline-area"/>
+                            </HBox>
+                        </ScrollPane>
+                    </StackPane>
                 </VBox>
 
                 <VBox fx:id="tasksView" visible="false" spacing="18" styleClass="content-area, tasks-view">

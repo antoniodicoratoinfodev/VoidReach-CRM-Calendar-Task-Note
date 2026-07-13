@@ -655,6 +655,10 @@
     -fx-border-color: #334155;
     -fx-border-width: 0 0 1 0;
 }
+.week-time-header {
+    -fx-background-color: #111a2c;
+    -fx-border-color: transparent #263449 #263449 transparent;
+}
 
 .week-day-column {
     -fx-stroke: #334155;
@@ -926,19 +930,43 @@
 .calendar-hint { -fx-text-fill: #64748b; -fx-font-size: 11px; }
 .segmented-navigation { -fx-background-color: #0b1324; -fx-background-radius: 8; -fx-padding: 2; }
 .segment-button { -fx-min-width: 32; -fx-pref-width: 32; -fx-min-height: 32; -fx-pref-height: 32; }
-.calendar-scroll {
-    -fx-background: #0b1324; -fx-background-color: #0b1324;
-    -fx-border-color: #1e293b; -fx-border-radius: 12; -fx-background-radius: 12;
+.calendar-surface {
+    -fx-background-color: #111827; -fx-background-radius: 14;
+    -fx-border-color: #263449; -fx-border-radius: 14; -fx-border-width: 1; -fx-padding: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 12, 0.08, 0, 3);
 }
-.calendar-scroll > .viewport { -fx-background-color: #0b1324; }
-.time-column, .timeline-area { -fx-background-color: #0b1324; }
+.calendar-scroll {
+    -fx-background: #111827; -fx-background-color: #111827;
+    -fx-border-color: transparent; -fx-background-radius: 13; -fx-padding: 0;
+}
+.calendar-scroll > .viewport { -fx-background-color: #111827; -fx-background-radius: 13; }
+.calendar-scroll .corner { -fx-background-color: #111827; }
+.calendar-scroll .scroll-bar:vertical { -fx-padding: 5 2 5 0; }
+.calendar-scroll .scroll-bar:vertical .increment-button,
+.calendar-scroll .scroll-bar:vertical .decrement-button {
+    -fx-min-height: 0; -fx-pref-height: 0; -fx-max-height: 0; -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+.calendar-scroll .scroll-bar:vertical .increment-arrow,
+.calendar-scroll .scroll-bar:vertical .decrement-arrow { -fx-padding: 0; }
+.time-column {
+    -fx-background-color: #0f172a;
+    -fx-border-color: transparent #263449 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+.timeline-area { -fx-background-color: #111827; }
 .hour-label { -fx-text-fill: #94a3b8; -fx-font-size: 11px; -fx-font-weight: 700; }
 .sub-hour-label { -fx-text-fill: #475569; -fx-font-size: 9px; }
 .timeline-line { -fx-stroke: #18243a; }
 .timeline-line-hour { -fx-stroke: #2a3a52; }
 .week-day-header {
     -fx-background-color: #111a2c; -fx-text-fill: #94a3b8;
-    -fx-border-color: #263449; -fx-font-weight: 700;
+    -fx-border-color: #263449; -fx-border-width: 0 1 1 0; -fx-font-weight: 700;
+}
+.week-time-header {
+    -fx-background-color: #111a2c;
+    -fx-border-color: transparent #263449 #263449 transparent;
+    -fx-border-width: 0 1 1 0;
 }
 .week-day-column { -fx-border-color: #1e293b; }
 .task-entry {

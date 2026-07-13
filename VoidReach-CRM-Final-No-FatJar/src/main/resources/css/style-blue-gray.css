@@ -84,19 +84,38 @@
 .table-row-cell .text { -fx-fill: #d8deea; }
 .table-footer { -fx-border-color: #34435a; }
 
-.calendar-scroll {
-    -fx-background: #151f33;
-    -fx-background-color: #151f33;
-    -fx-border-color: #34435a;
+.calendar-surface {
+    -fx-background-color: #1c293e; -fx-background-radius: 14;
+    -fx-border-color: #3a4960; -fx-border-radius: 14; -fx-border-width: 1; -fx-padding: 1;
+    -fx-effect: dropshadow(gaussian, rgba(5,12,24,0.20), 12, 0.08, 0, 3);
 }
-.calendar-scroll > .viewport, .time-column, .timeline-area { -fx-background-color: #151f33; }
+.calendar-scroll {
+    -fx-background: #1c293e;
+    -fx-background-color: #1c293e;
+    -fx-border-color: transparent;
+    -fx-background-radius: 13;
+    -fx-padding: 0;
+}
+.calendar-scroll > .viewport { -fx-background-color: #1c293e; -fx-background-radius: 13; }
+.calendar-scroll .corner { -fx-background-color: #1c293e; }
+.time-column {
+    -fx-background-color: #19253a;
+    -fx-border-color: transparent #3a4960 transparent transparent;
+}
+.timeline-area { -fx-background-color: #1c293e; }
 .segmented-navigation { -fx-background-color: #111c31; }
 .hour-label { -fx-text-fill: #c1cad8; }
 .sub-hour-label { -fx-text-fill: #728198; }
 .week-day-header {
-    -fx-background-color: #1c293e;
+    -fx-background-color: #202d42;
     -fx-text-fill: #9ca9bc;
     -fx-border-color: #3a4960;
+    -fx-border-width: 0 1 1 0;
+}
+.week-time-header {
+    -fx-background-color: #202d42;
+    -fx-border-color: transparent #3a4960 #3a4960 transparent;
+    -fx-border-width: 0 1 1 0;
 }
 .task-blue { -fx-background-color: #3f82ed; -fx-border-color: #1f5fc8; }
 .task-blue .task-title, .task-blue .task-time, .task-blue .task-desc { -fx-text-fill: #ffffff; }
