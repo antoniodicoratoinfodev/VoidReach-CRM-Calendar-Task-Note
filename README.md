@@ -115,8 +115,8 @@ The Tasks section is a dedicated control center for every task stored in the cal
 - Click a task row to open the same editor used by Calendar.
 - Open the corresponding calendar date.
 - Delete a task with confirmation.
-- Open any note linked to the task.
-- Multiple linked notes are available through a compact menu.
+- Open any linked note by selecting its title directly in the task row.
+- Creating or editing a task opens the same searchable **Home → folders → subfolders → notes** picker used by Calendar, including multiple selection.
 
 Calendar and Tasks always operate on the same task data; changes made in one section immediately appear in the other.
 

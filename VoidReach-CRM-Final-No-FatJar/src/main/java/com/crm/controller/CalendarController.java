@@ -10,6 +10,7 @@ import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -21,6 +22,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.stage.Popup;
 import javafx.util.Duration;
 
 import java.time.LocalDate;
@@ -759,15 +761,20 @@ public final class CalendarController {
         ComboBox<String> color = new ComboBox<>(FXCollections.observableArrayList(
                 "Blue", "Red", "Green", "Yellow", "Orange", "Purple"));
         color.setValue(existingTask == null ? "Blue" : existingTask.getColor());
-        MenuButton noteMenu = new MenuButton("No linked notes");
+        Button noteMenu = new Button("No linked notes ▾");
         noteMenu.getStyleClass().add("task-note-selector");
         noteMenu.setMaxWidth(Double.MAX_VALUE);
+        Popup notePickerPopup = new Popup();
+        notePickerPopup.setAutoFix(true);
+        notePickerPopup.setAutoHide(true);
+        notePickerPopup.setHideOnEscape(true);
+        notePickerPopup.setConsumeAutoHidingEvents(false);
         Map<Note, BooleanProperty> noteSelections = new java.util.LinkedHashMap<>();
         String existingTaskId = existingTask == null ? "" : existingTask.getId();
         Runnable updateNoteMenuText = () -> {
             long selected = noteSelections.values().stream().filter(BooleanProperty::get).count();
-            noteMenu.setText(selected == 0 ? "No linked notes"
-                    : selected + (selected == 1 ? " linked note" : " linked notes"));
+            noteMenu.setText((selected == 0 ? "No linked notes"
+                    : selected + (selected == 1 ? " linked note" : " linked notes")) + "  ▾");
         };
         noteIntegration.notes().forEach(candidate -> {
             BooleanProperty choice = new SimpleBooleanProperty(
@@ -776,9 +783,7 @@ public final class CalendarController {
             noteSelections.put(candidate, choice);
         });
         if (noteSelections.isEmpty()) {
-            MenuItem empty = new MenuItem("No notes available");
-            empty.setDisable(true);
-            noteMenu.getItems().add(empty);
+            noteMenu.setText("No notes available");
             noteMenu.setDisable(true);
         } else {
             TextField noteSearch = new TextField();
@@ -815,8 +820,18 @@ public final class CalendarController {
             hint.getStyleClass().add("note-picker-hint");
             VBox picker = new VBox(8, noteSearch, noteTree, hint);
             picker.getStyleClass().add("note-picker");
-            CustomMenuItem pickerItem = new CustomMenuItem(picker, false);
-            noteMenu.getItems().add(pickerItem);
+            notePickerPopup.getContent().add(picker);
+            noteMenu.setOnAction(event -> {
+                if (notePickerPopup.isShowing()) {
+                    notePickerPopup.hide();
+                    return;
+                }
+                Bounds anchor = noteMenu.localToScreen(noteMenu.getBoundsInLocal());
+                if (anchor == null || noteMenu.getScene() == null) return;
+                picker.getStylesheets().setAll(noteMenu.getScene().getStylesheets());
+                notePickerPopup.show(noteMenu, anchor.getMinX(), anchor.getMaxY() + 4);
+                Platform.runLater(noteSearch::requestFocus);
+            });
         }
         updateNoteMenuText.run();
         grid.add(new Label("Title:"), 0, 0); grid.add(title, 1, 0);
@@ -841,6 +856,7 @@ public final class CalendarController {
             grid.add(new Label("Open linked:"), 0, 7); grid.add(links, 1, 7);
         }
         dialog.getDialogPane().setContent(grid);
+        dialog.setOnHidden(event -> notePickerPopup.hide());
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isEmpty()) return;
         LocalDate dateToDisplay = sourceDate;

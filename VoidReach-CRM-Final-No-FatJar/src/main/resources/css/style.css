@@ -749,7 +749,11 @@
 }
 .dialog-pane .task-note-selector .label { -fx-text-fill: #334155; }
 .dialog-pane .task-note-selector .arrow { -fx-background-color: #64748b; }
-.note-picker { -fx-padding: 10; -fx-background-color: #ffffff; }
+.note-picker {
+    -fx-padding: 10; -fx-background-color: #ffffff; -fx-background-radius: 10;
+    -fx-border-color: #dbe2ea; -fx-border-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.22), 18, 0.12, 0, 6);
+}
 .note-picker-search { -fx-min-height: 36; }
 .note-picker-tree { -fx-background-color: #ffffff; -fx-border-color: #dbe2ea; -fx-border-radius: 7; }
 .note-picker-tree .tree-cell { -fx-background-color: transparent; -fx-text-fill: #334155; -fx-padding: 6 8; -fx-font-weight: 700; }
@@ -996,4 +1000,5 @@
     -fx-font-weight: 700; -fx-padding: 2 5; -fx-cursor: hand;
 }
 .calendar-note-links { -fx-padding: 2 0 1 0; }
+.task-note-links { -fx-alignment: CENTER_RIGHT; }
 .calendar-note-link:hover, .activity-note-link:hover, .dialog-note-link:hover, .task-note-link:hover { -fx-background-color: #dbeafe; -fx-background-radius: 6; }

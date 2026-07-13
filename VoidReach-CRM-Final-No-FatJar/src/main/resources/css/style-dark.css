@@ -1033,7 +1033,7 @@
 }
 .dialog-pane .task-note-selector .label { -fx-text-fill: #e2e8f0; }
 .dialog-pane .task-note-selector .arrow { -fx-background-color: #94a3b8; }
-.note-picker { -fx-background-color: #111a2c; }
+.note-picker { -fx-background-color: #111a2c; -fx-border-color: #334155; }
 .note-picker-tree { -fx-background-color: #0f172a; -fx-border-color: #334155; }
 .note-picker-tree .tree-cell { -fx-background-color: transparent; -fx-text-fill: #cbd5e1; }
 .note-picker-tree .tree-cell:selected { -fx-background-color: #1e3a5f; -fx-text-fill: #ffffff; }

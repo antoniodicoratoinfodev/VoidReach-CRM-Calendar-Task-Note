@@ -148,7 +148,7 @@
 }
 .dialog-pane .task-note-selector .label { -fx-text-fill: #eef2f7; }
 .dialog-pane .task-note-selector .arrow { -fx-background-color: #aeb9c9; }
-.note-picker { -fx-background-color: #202d42; }
+.note-picker { -fx-background-color: #202d42; -fx-border-color: #3a4960; }
 .note-picker-tree { -fx-background-color: #111c31; -fx-border-color: #3a4960; }
 .note-picker-tree .tree-cell { -fx-background-color: transparent; -fx-text-fill: #d9e0eb; }
 .note-picker-tree .tree-cell:selected { -fx-background-color: #263c60; -fx-text-fill: #ffffff; }

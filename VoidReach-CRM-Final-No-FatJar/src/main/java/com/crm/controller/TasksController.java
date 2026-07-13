@@ -13,11 +13,11 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -174,23 +174,22 @@ public final class TasksController {
         delete.setOnAction(event -> confirmDelete(entry));
         HBox controls = new HBox(6);
         List<Note> linkedNotes = actions.linkedNotes(task.getId());
-        if (linkedNotes.size() == 1) {
-            Note linked = linkedNotes.getFirst();
-            Button note = new Button("Open note");
-            note.getStyleClass().addAll("task-row-button", "task-note-link");
-            note.setOnAction(event -> actions.openNote(linked.getId()));
-            note.setTooltip(new Tooltip("Open the linked note"));
-            controls.getChildren().add(note);
-        } else if (linkedNotes.size() > 1) {
-            MenuButton note = new MenuButton(linkedNotes.size() + " notes");
-            note.getStyleClass().addAll("task-row-button", "task-note-link");
+        if (!linkedNotes.isEmpty()) {
+            FlowPane noteLinks = new FlowPane(4, 4);
+            noteLinks.setPrefWrapLength(220);
+            noteLinks.setMaxWidth(240);
+            noteLinks.getStyleClass().add("task-note-links");
             linkedNotes.forEach(linked -> {
-                MenuItem item = new MenuItem(linked.getTitle().isBlank() ? "Untitled note" : linked.getTitle());
-                item.setOnAction(event -> actions.openNote(linked.getId()));
-                note.getItems().add(item);
+                String noteTitle = linked.getTitle().isBlank() ? "Untitled note" : linked.getTitle();
+                Button note = new Button(noteTitle);
+                note.getStyleClass().add("task-note-link");
+                note.setMaxWidth(160);
+                note.setTextOverrun(OverrunStyle.ELLIPSIS);
+                note.setTooltip(new Tooltip("Open note: " + noteTitle));
+                note.setOnAction(event -> actions.openNote(linked.getId()));
+                noteLinks.getChildren().add(note);
             });
-            note.setTooltip(new Tooltip("Open a linked note"));
-            controls.getChildren().add(note);
+            controls.getChildren().add(noteLinks);
         }
         controls.getChildren().addAll(calendar, edit, delete);
         controls.setAlignment(Pos.CENTER_RIGHT);
