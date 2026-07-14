@@ -72,15 +72,30 @@ Dashboard values update whenever contacts or tasks change.
 - Create, view, edit, and delete contacts.
 - Open a contact by clicking its table row.
 - Store name, company, job title, email, phone, last interaction, tag, and description.
-- Built-in tags: `Client`, `Tech`, and `Follow-up`.
+- Tags: `Empty` (no tag, the default for new contacts), `Client`, `Tech`, and `Follow-up`.
+- The description is shown in its own table column as a single-line preview with ellipsis; hovering shows the full text in a wrapping tooltip.
 - Search in real time by contact information and description.
-- Sort any visible field in ascending or descending order.
+- Sort any visible field, including description and custom fields, in ascending or descending order.
 - Clear the active sorting rule.
 - Paginate results using 15, 25, 50, or 100 rows, or display all contacts.
 - Enable selection mode for single or bulk deletion.
 - Copy selected contacts to the clipboard with `Ctrl+C` or `Cmd+C`.
 - Resize and reorder table columns with the mouse.
 - Rename a column by clicking directly on its label; dragging the surrounding header continues to reorder the column.
+
+#### Quick edit
+
+- The **Quick edit** toggle in the toolbar switches the table to in-place editing: click a cell and type, press `Enter` or click away to save, `Esc` to cancel.
+- The tag cell edits through a drop-down list and the description cell through a multi-line editor (`Ctrl+Enter`/`Cmd+Enter` saves).
+- While Quick edit is on, **New contact** inserts an empty row directly in the table and starts editing its name; the full pop-up editor stays available with a right click on the row.
+- The Quick edit state is saved per account and restored at the next sign-in.
+
+#### Custom fields
+
+- **Add field** in the toolbar, or **＋ Add field** inside the contact pop-up, adds a user-defined column (for example `Automobile`) to the table and to the pop-up editor.
+- Field names must be unique; custom fields support inline editing, sorting, and renaming from the column header.
+- Right-click a custom column header to remove the field; its stored values are deleted after confirmation.
+- Custom field definitions and values are persisted per account.
 
 ### Calendar
 
@@ -254,9 +269,13 @@ The last selected theme is stored per account and restored when that account ope
 
 | Context | Action |
 |---|---|
-| Contacts | Click a row to edit |
+| Contacts | Click a row to open the editor (Quick edit off) |
+| Contacts | Click a cell to edit it in place (Quick edit on) |
+| Contacts | Right-click a row to open the pop-up editor (Quick edit on) |
+| Contacts | `Esc` cancels an in-place edit; `Enter` saves it |
 | Contacts | Click a column label to rename it |
 | Contacts | Drag a column header to reorder it |
+| Contacts | Right-click a custom column label to remove the field |
 | Contacts | `Ctrl+C` / `Cmd+C` copies selected contacts |
 | Calendar | Click a task to edit |
 | Calendar | Drag a task to reschedule it |
@@ -280,7 +299,7 @@ VoidReach stores application data under `.voidreach-crm` in the current user's h
 ├── users.properties.bak                     # previous atomic revision when available
 ├── session.properties                       # remembered account email only
 ├── data/
-│   ├── <account-id>.properties              # contacts, tasks, notes, ordering, links, calendar settings
+│   ├── <account-id>.properties              # contacts, custom fields, tasks, notes, ordering, links, view preferences
 │   └── <account-id>.properties.bak          # previous atomic workspace revision
 ├── avatars/
 │   ├── <account-id>-<uuid>.png              # authoritative cropped master
@@ -353,7 +372,7 @@ The tests cover contact and overview behavior, task and note models, Markdown co
 
 ## Native Packaging
 
-Native application images must be created on their target operating system.
+Native application images must be created on their target operating system. Packaging requires a JDK 26+ whose `bin` directory (containing `jpackage`) is on `PATH`, plus Apache Maven; both scripts verify this before building.
 
 ### macOS
 
@@ -362,14 +381,20 @@ cd VoidReach-CRM-Final-No-FatJar
 ./scripts/package-macos.sh
 ```
 
+The application image is created at `target/packages/macos/VoidReach.app`.
+
 ### Windows
 
-Run the following script from PowerShell:
+Run the script from **PowerShell** (not from `cmd.exe`). The default PowerShell execution policy blocks local scripts, so launch it with a per-run bypass:
 
 ```powershell
 cd VoidReach-CRM-Final-No-FatJar
-./scripts/package-windows.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
 ```
+
+If your execution policy already allows local scripts, `./scripts/package-windows.ps1` works too.
+
+The application image is created at `target\packages\windows\VoidReach\` and is started with `VoidReach.exe` inside that folder.
 
 Packages are written under `target/packages/`. Packaging scripts do not run the test suite automatically, so run `mvn clean test` before distributing a build.
 
@@ -411,7 +436,7 @@ VoidReach-CRM-Calendar-Task/
         │   ├── packaging/                  # native platform icons
         │   └── resources/
         │       ├── com/crm/view/           # FXML layouts
-        │       ├── css/                    # Light, Dark, and Blue-gray themes
+        │       ├── css/                    # Light, Dark, Blue-gray, and Gray Blue themes
         │       └── images/                 # application graphics
         └── test/java/com/crm/              # unit and integration tests
 ```
