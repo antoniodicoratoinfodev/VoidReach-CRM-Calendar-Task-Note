@@ -71,8 +71,10 @@
 }
 
 .sidebar-button-active {
-    -fx-background-color: #3b82f6;
-    -fx-text-fill: white;
+    -fx-background-color: rgba(255,255,255,0.10), rgba(255,255,255,0.06);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 9, 8;
+    -fx-text-fill: #f1f5f9;
 }
 
 .btn-primary {
@@ -779,13 +781,12 @@
 .sidebar-button:hover { -fx-background-color: #172033; -fx-text-fill: #e2e8f0; }
 .sidebar-button:hover .nav-icon { -fx-icon-color: #cbd5e1; }
 .sidebar-button-active {
-    -fx-background-color: #172554;
-    -fx-text-fill: #dbeafe;
-    -fx-border-color: #1d4ed8;
-    -fx-border-width: 0 0 0 3;
-    -fx-border-radius: 3 9 9 3;
+    -fx-background-color: rgba(255,255,255,0.10), rgba(255,255,255,0.06);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 9, 8;
+    -fx-text-fill: #f1f5f9;
 }
-.sidebar-button-active .nav-icon { -fx-icon-color: #60a5fa; }
+.sidebar-button-active .nav-icon { -fx-icon-color: #93c5fd; }
 
 .navbar {
     -fx-background-color: #0f172a;
