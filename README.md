@@ -11,6 +11,7 @@ The project is designed to support a future online service that can make workspa
 ## Contents
 
 - [Current Status](#current-status)
+- [Screenshots](#screenshots)
 - [Feature Overview](#feature-overview)
   - [Accounts and Authentication](#accounts-and-authentication)
   - [Home](#home)
@@ -48,6 +49,66 @@ The following sections are operational:
 - Local persistence and automatic backups
 
 The Settings navigation item and the Help/Notifications top-bar controls are currently placeholders.
+
+## Screenshots
+
+The following samples use the same professional demo workspace across all four available themes.
+
+### Blue-gray
+
+![Blue-gray Home](sample/screenshots/blue-gray/home.png)
+
+![Blue-gray Dashboard](sample/screenshots/blue-gray/dashboard.png)
+
+![Blue-gray Contacts](sample/screenshots/blue-gray/contacts.png)
+
+![Blue-gray Calendar](sample/screenshots/blue-gray/calendar.png)
+
+![Blue-gray Tasks](sample/screenshots/blue-gray/tasks.png)
+
+![Blue-gray Notes](sample/screenshots/blue-gray/notes.png)
+
+### Gray Blue
+
+![Gray Blue Home](sample/screenshots/gray-blue/home.png)
+
+![Gray Blue Dashboard](sample/screenshots/gray-blue/dashboard.png)
+
+![Gray Blue Contacts](sample/screenshots/gray-blue/contacts.png)
+
+![Gray Blue Calendar](sample/screenshots/gray-blue/calendar.png)
+
+![Gray Blue Tasks](sample/screenshots/gray-blue/tasks.png)
+
+![Gray Blue Notes](sample/screenshots/gray-blue/notes.png)
+
+### Dark
+
+![Dark Home](sample/screenshots/dark/home.png)
+
+![Dark Dashboard](sample/screenshots/dark/dashboard.png)
+
+![Dark Contacts](sample/screenshots/dark/contacts.png)
+
+![Dark Calendar](sample/screenshots/dark/calendar.png)
+
+![Dark Tasks](sample/screenshots/dark/tasks.png)
+
+![Dark Notes](sample/screenshots/dark/notes.png)
+
+### Light
+
+![Light Home](sample/screenshots/light/home.png)
+
+![Light Dashboard](sample/screenshots/light/dashboard.png)
+
+![Light Contacts](sample/screenshots/light/contacts.png)
+
+![Light Calendar](sample/screenshots/light/calendar.png)
+
+![Light Tasks](sample/screenshots/light/tasks.png)
+
+![Light Notes](sample/screenshots/light/notes.png)
 
 ## Feature Overview
 
