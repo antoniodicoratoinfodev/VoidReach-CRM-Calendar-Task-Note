@@ -8,6 +8,9 @@ import com.crm.model.CrmDataSnapshot;
 import com.crm.model.UserAccount;
 import com.crm.repository.CrmBackupService;
 import com.crm.repository.CrmDataRepository;
+import com.crm.repository.ExportOwner;
+import com.crm.repository.ImportedWorkspace;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +62,14 @@ class CrmWorkspaceServiceTest {
         @Override public void saveForUser(String userId, CrmDataSnapshot data) {
             saveCount.incrementAndGet();
             lastSnapshot.set(data);
+        }
+
+        @Override public void exportForUser(String userId, Path target, ExportOwner owner) {
+            throw new UnsupportedOperationException("not exercised by this test");
+        }
+
+        @Override public ImportedWorkspace readImport(Path source) {
+            throw new UnsupportedOperationException("not exercised by this test");
         }
     }
 }

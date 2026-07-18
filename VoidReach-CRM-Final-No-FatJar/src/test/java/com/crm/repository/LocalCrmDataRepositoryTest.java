@@ -1,6 +1,7 @@
 package com.crm.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.crm.model.Contact;
@@ -26,6 +27,35 @@ import org.junit.jupiter.api.io.TempDir;
 
 class LocalCrmDataRepositoryTest {
     @TempDir Path directory;
+
+    @Test void exportStampsOwnerAndImportReadsItBack() {
+        LocalCrmDataRepository repository = new LocalCrmDataRepository(directory);
+        LocalDate date = LocalDate.of(2026, 7, 14);
+        repository.saveForUser("account-1", new CrmDataSnapshot(
+                List.of(new Contact("c1", "Ada", "", "", "", "", "", "", "")), Map.of(), date, "Day", 1.0));
+
+        Path exported = directory.resolve("portable.properties");
+        repository.exportForUser("account-1", exported, new ExportOwner("Ada@Example.test", "Ada Lovelace"));
+
+        ImportedWorkspace imported = repository.readImport(exported);
+        assertEquals("Ada@Example.test", imported.owner().email());
+        assertEquals("Ada Lovelace", imported.owner().name());
+        assertEquals("c1", imported.snapshot().contacts().get(0).getId());
+    }
+
+    @Test void importReadsLegacyFileWithNoOwnerStamp() {
+        LocalCrmDataRepository repository = new LocalCrmDataRepository(directory);
+        LocalDate date = LocalDate.of(2026, 7, 14);
+        repository.saveForUser("account-1", new CrmDataSnapshot(
+                List.of(new Contact("c1", "Ada", "", "", "", "", "", "", "")), Map.of(), date, "Day", 1.0));
+
+        Path exported = directory.resolve("legacy.properties");
+        repository.exportForUser("account-1", exported, null);
+
+        ImportedWorkspace imported = repository.readImport(exported);
+        assertNull(imported.owner());
+        assertEquals(1, imported.snapshot().contacts().size());
+    }
 
     @Test void loadsValidRecordsAndQuarantinesOnlyCorruptOnes() throws Exception {
         LocalCrmDataRepository repository = new LocalCrmDataRepository(directory);

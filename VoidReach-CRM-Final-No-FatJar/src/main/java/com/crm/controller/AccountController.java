@@ -52,6 +52,8 @@ public final class AccountController {
     private Window avatarScaleWindow;
     private UserAccount currentUser;
     private Runnable logoutAction;
+    private Runnable exportDataAction;
+    private Runnable importDataAction;
     private long avatarLoadVersion;
     private String displayedAvatarFileName;
     private int displayedAvatarPixelSize;
@@ -95,6 +97,12 @@ public final class AccountController {
         });
     }
 
+    /** Wires the account menu's data transfer entries to the owner-aware export/import flow. */
+    public void setDataTransferActions(Runnable exportDataAction, Runnable importDataAction) {
+        this.exportDataAction = exportDataAction;
+        this.importDataAction = importDataAction;
+    }
+
     public void showMenu() {
         if (currentUser == null) return;
         MenuItem profile = new MenuItem("Profile and account details");
@@ -103,9 +111,14 @@ public final class AccountController {
         security.setOnAction(event -> showChangePasswordDialog());
         MenuItem avatar = new MenuItem("Update profile picture");
         avatar.setOnAction(event -> chooseAvatar());
+        MenuItem exportData = new MenuItem("Export data");
+        exportData.setOnAction(event -> { if (exportDataAction != null) exportDataAction.run(); });
+        MenuItem importData = new MenuItem("Import data");
+        importData.setOnAction(event -> { if (importDataAction != null) importDataAction.run(); });
         MenuItem logout = new MenuItem("Sign out");
         logout.setOnAction(event -> logout());
-        new ContextMenu(profile, security, avatar, new SeparatorMenuItem(), logout)
+        new ContextMenu(profile, security, avatar, new SeparatorMenuItem(),
+                exportData, importData, new SeparatorMenuItem(), logout)
                 .show(accountMenuButton, Side.BOTTOM, 0, 6);
     }
 

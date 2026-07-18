@@ -8,7 +8,10 @@ import com.crm.model.NoteFormat;
 import com.crm.model.Task;
 import com.crm.repository.CorruptRecordQuarantine.RejectedRecord;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -16,6 +19,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -25,6 +29,10 @@ public class LocalCrmDataRepository implements CrmDataRepository {
     private static final int SCHEMA_VERSION = 1;
     private static final int MAX_RECORDS = 100_000;
     private static final String FILE_TYPE = "voidreach.crm-data";
+    // Owner stamp added to portable exports (not to the per-account on-disk file). Both the desktop
+    // and Android apps write/read these keys so an import can warn on a foreign account's file.
+    private static final String OWNER_EMAIL_KEY = "account.owner.email";
+    private static final String OWNER_NAME_KEY = "account.owner.name";
     private final Path dataDirectory;
 
     LocalCrmDataRepository(Path dataDirectory) { this.dataDirectory = dataDirectory; }
@@ -34,6 +42,13 @@ public class LocalCrmDataRepository implements CrmDataRepository {
         Path file = dataFile(userId);
         Properties properties = load(file);
         List<RejectedRecord> rejected = new ArrayList<>();
+        CrmDataSnapshot snapshot = deserialize(properties, rejected);
+        CorruptRecordQuarantine.writeBestEffort(file, rejected);
+        return snapshot;
+    }
+
+    /** Parses an already-loaded property set into a snapshot, collecting rejects (writes no files). */
+    private CrmDataSnapshot deserialize(Properties properties, List<RejectedRecord> rejected) {
         List<Contact> contacts = new ArrayList<>();
         Map<LocalDate, List<Task>> tasks = new HashMap<>();
         List<Note> notes = new ArrayList<>();
@@ -118,7 +133,6 @@ public class LocalCrmDataRepository implements CrmDataRepository {
             return Boolean.parseBoolean(value);
         }, rejected);
 
-        CorruptRecordQuarantine.writeBestEffort(file, rejected);
         return new CrmDataSnapshot(contacts, tasks, notes, noteFolders, selectedDate, viewMode, zoom,
                 customFields, quickEdit);
     }
@@ -148,6 +162,67 @@ public class LocalCrmDataRepository implements CrmDataRepository {
         } catch (IOException e) {
             throw new IllegalStateException("Local data could not be saved", e);
         }
+    }
+
+    @Override public synchronized void exportForUser(String userId, Path target, ExportOwner owner) {
+        Properties properties = serialize(loadForUser(userId));
+        if (owner != null) {
+            put(properties, OWNER_EMAIL_KEY, owner.email());
+            put(properties, OWNER_NAME_KEY, owner.name());
+        }
+        try (OutputStream output = Files.newOutputStream(target)) {
+            properties.store(output, "VoidReach CRM portable data for one account");
+        } catch (IOException e) {
+            throw new IllegalStateException("Data could not be exported", e);
+        }
+    }
+
+    @Override public synchronized ImportedWorkspace readImport(Path source) {
+        Properties properties = new Properties();
+        try (InputStream input = Files.newInputStream(source)) {
+            properties.load(input);
+        } catch (IOException e) {
+            throw new IllegalStateException("The selected file could not be read", e);
+        }
+        validateImport(properties);
+        String email = ownerStamp(properties, OWNER_EMAIL_KEY);
+        ExportOwner owner = email == null ? null
+                : new ExportOwner(email, Objects.requireNonNullElse(ownerStamp(properties, OWNER_NAME_KEY), ""));
+        CrmDataSnapshot snapshot = deserialize(properties, new ArrayList<>());
+        return new ImportedWorkspace(owner, snapshot);
+    }
+
+    private void validateImport(Properties properties) {
+        String version = properties.getProperty(AtomicPropertiesStore.SCHEMA_VERSION_KEY);
+        if (version != null) {
+            int schema;
+            try {
+                schema = Integer.parseInt(version);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid schema version: " + version);
+            }
+            if (schema < 1 || schema > SCHEMA_VERSION) throw new IllegalArgumentException("Unsupported schema version: " + schema);
+        }
+        String type = properties.getProperty(AtomicPropertiesStore.FILE_TYPE_KEY);
+        if (type != null && !FILE_TYPE.equals(type)) throw new IllegalArgumentException("This file is not a VoidReach CRM data file.");
+        boolean recognizable = properties.containsKey("contacts.count") || properties.containsKey("tasks.count")
+                || properties.containsKey("notes.count") || properties.containsKey("noteFolders.count")
+                || properties.containsKey("calendar.selectedDate");
+        if (!recognizable) throw new IllegalArgumentException("This file is not a VoidReach CRM data file.");
+    }
+
+    /** Owner value tolerating both Base64 (how we write it) and a plain hand-edited value; null when absent. */
+    private String ownerStamp(Properties properties, String key) {
+        String raw = properties.getProperty(key);
+        if (raw == null) return null;
+        String decoded;
+        try {
+            decoded = decode(raw, key);
+        } catch (RuntimeException failure) {
+            decoded = raw;
+        }
+        decoded = decoded.trim();
+        return decoded.isEmpty() ? null : decoded;
     }
 
     private Properties serialize(CrmDataSnapshot data) {

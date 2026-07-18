@@ -11,10 +11,15 @@ solely for informational, educational, and portfolio demonstration purposes.
 
    You are permitted to:
 
-   a) View and read the source code for personal learning or evaluation purposes.
+   a) View and read the source code through the public repository for personal
+      learning or evaluation purposes.
    b) Assess the quality, architecture, and design of the Software for the purpose
       of evaluating the author's work and technical skills.
-   c) Fork or download the repository exclusively for the purposes described above.
+
+   These permissions are limited to visual inspection. Except for the limited
+   reproduction within GitHub that follows from publishing a public repository,
+   they do not include any right to copy, download, reproduce, modify, or reuse
+   the Software.
 
 -------------------------------------------------------------------------------
 
@@ -22,14 +27,17 @@ solely for informational, educational, and portfolio demonstration purposes.
 
    You are NOT permitted to:
 
-   a) Run, execute, deploy, or use the Software — in whole or in part — for any
-      commercial, professional, or business purpose of any kind.
-   b) Use the Software, or any portion of it, in a production environment,
-      internal tooling, or any system that supports a commercial operation.
-   c) Redistribute, sublicense, sell, rent, lease, or transfer the Software or
-      any derivative works based on it.
-   d) Incorporate any part of the Software into another product or project
-      without the author's explicit written permission.
+   a) Use a fork or other reproduction of this repository as the basis for a
+      personal or third-party project, product, service, or derivative work.
+   b) Modify, adapt, translate, or create derivative works from the Software or
+      any portion of it.
+   c) Incorporate or reuse any part of the Software in a personal or third-party
+      project, product, service, coursework submission, internal tool, or
+      production system.
+   d) Run, execute, deploy, or use the repository version of the Software for any
+      commercial, professional, production, or business purpose of any kind.
+   e) Redistribute, sublicense, sell, rent, lease, publish, or transfer the
+      Software or any derivative work based on it.
 
 -------------------------------------------------------------------------------
 
@@ -39,11 +47,11 @@ solely for informational, educational, and portfolio demonstration purposes.
    and is actively under development — new features and modules will be added
    over time.
 
-   The Software may be further developed, customized, and licensed to businesses
-   or individuals under a separate commercial agreement. Clients interested in
-   adopting VoidReach for professional use are encouraged to request a tailored
-   version, adapted to their specific needs and workflows, rather than using
-   this general public build.
+   Any commercial or professional use of VoidReach requires the purchase of an
+   authorized commercial version or a separate written commercial agreement
+   with the author. Clients interested in adopting VoidReach may request a
+   version adapted to their specific needs and workflows; the public repository
+   does not provide commercial or production-use rights.
 
    Note: if a commercial agreement is reached, this repository may be set to
    private or the source code may be removed. In such cases, only the

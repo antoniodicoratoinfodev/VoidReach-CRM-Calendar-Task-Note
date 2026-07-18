@@ -4,8 +4,11 @@ import com.crm.model.CrmDataSnapshot;
 import com.crm.model.UserAccount;
 import com.crm.repository.CrmBackupService;
 import com.crm.repository.CrmDataRepository;
+import com.crm.repository.ExportOwner;
+import com.crm.repository.ImportedWorkspace;
 import com.crm.repository.LocalCrmDataRepository;
 
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -58,6 +61,19 @@ public final class CrmWorkspaceService implements AutoCloseable {
     public void save(CrmDataSnapshot snapshot) {
         if (currentUser == null) return;
         repository.saveForUser(currentUser.getId(), Objects.requireNonNull(snapshot));
+    }
+
+    /** Exports the open account's saved workspace to [target], stamped with that account's identity. */
+    public void exportCurrentUser(Path target) {
+        UserAccount user = currentUser;
+        if (user == null) throw new IllegalStateException("No account is open.");
+        repository.exportForUser(user.getId(), Objects.requireNonNull(target),
+                new ExportOwner(user.getEmail(), user.getFullName()));
+    }
+
+    /** Reads a portable file without committing it, so the caller can vet the owning account first. */
+    public ImportedWorkspace readImport(Path source) {
+        return repository.readImport(Objects.requireNonNull(source));
     }
 
     public CompletableFuture<CrmDataSnapshot> openAsync(UserAccount user) {

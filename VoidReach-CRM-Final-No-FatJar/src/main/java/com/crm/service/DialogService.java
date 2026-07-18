@@ -4,6 +4,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -12,6 +14,7 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.Window;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /** Centralizes themed informational and error alerts. */
 public final class DialogService {
@@ -35,6 +38,16 @@ public final class DialogService {
 
     public void showInfo(String title, String content) {
         create(Alert.AlertType.INFORMATION, title, content).showAndWait();
+    }
+
+    /** Themed warning with a confirm/cancel choice. Returns true only when the confirm button is chosen. */
+    public boolean confirmWarning(String title, String content, String confirmText) {
+        Alert alert = create(Alert.AlertType.WARNING, title, content);
+        ButtonType proceed = new ButtonType(confirmText, ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(cancel, proceed);
+        Optional<ButtonType> choice = alert.showAndWait();
+        return choice.isPresent() && choice.get() == proceed;
     }
 
     private Alert create(Alert.AlertType type, String title, String content) {

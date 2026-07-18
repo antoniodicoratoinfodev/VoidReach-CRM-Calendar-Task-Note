@@ -3,6 +3,8 @@ package com.crm.controller;
 import com.crm.model.Contact;
 import com.crm.model.CrmDataSnapshot;
 import com.crm.model.UserAccount;
+import com.crm.repository.ExportOwner;
+import com.crm.repository.ImportedWorkspace;
 import com.crm.repository.LocalUserRepository;
 import com.crm.repository.UserRepository;
 import com.crm.service.CrmWorkspaceService;
@@ -21,16 +23,20 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.fxmisc.richtext.CodeArea;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * FXML composition root for the main window.
@@ -233,6 +239,7 @@ public final class MainController {
                 });
         accountController = new AccountController(currentUserLabel, accountMenuButton,
                 defaultAvatarIcon, avatarImage, themeService, dialogService);
+        accountController.setDataTransferActions(this::exportData, this::importData);
 
         navigationController.initialize();
         contactsController.initialize();
@@ -319,6 +326,85 @@ public final class MainController {
     private Window ownerWindow() {
         Scene scene = themeToggleBtn == null ? null : themeToggleBtn.getScene();
         return scene == null ? null : scene.getWindow();
+    }
+
+    /** Writes the current account's workspace to a user-chosen desktop-compatible file. */
+    private void exportData() {
+        if (currentUser == null) return;
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export data");
+        chooser.setInitialFileName("VoidReach-CRM-" + LocalDate.now() + ".properties");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("VoidReach CRM data", "*.properties"));
+        File selected = chooser.showSaveDialog(ownerWindow());
+        if (selected == null) return;
+        Path target = selected.toPath();
+        setSaveStatus("Exporting…");
+        CompletableFuture.runAsync(() -> workspaceService.exportCurrentUser(target)).whenComplete((ignored, failure) ->
+                Platform.runLater(() -> {
+                    if (failure != null) {
+                        setSaveStatus("Export failed");
+                        dialogService.showError("Export failed",
+                                "The data could not be exported to the selected file.");
+                    } else {
+                        setSaveStatus("Data exported");
+                        dialogService.showInfo("Export complete", "Data exported in desktop-compatible format.");
+                    }
+                }));
+    }
+
+    /** Loads a portable file, warning first when it belongs to a different account, then applies it. */
+    private void importData() {
+        if (currentUser == null) return;
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Import data");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("VoidReach CRM data", "*.properties"),
+                new FileChooser.ExtensionFilter("All files", "*.*"));
+        File selected = chooser.showOpenDialog(ownerWindow());
+        if (selected == null) return;
+        Path source = selected.toPath();
+        setSaveStatus("Importing…");
+        CompletableFuture.supplyAsync(() -> workspaceService.readImport(source)).whenComplete((imported, failure) ->
+                Platform.runLater(() -> {
+                    if (failure != null) {
+                        setSaveStatus("Import failed");
+                        dialogService.showError("Import failed",
+                                "The selected file could not be read as VoidReach CRM data.");
+                        return;
+                    }
+                    ExportOwner owner = imported.owner();
+                    if (owner != null && currentUser != null && !owner.email().equalsIgnoreCase(currentUser.getEmail())) {
+                        String who = owner.name() == null || owner.name().isBlank()
+                                ? owner.email() : owner.name() + " (" + owner.email() + ")";
+                        boolean proceed = dialogService.confirmWarning("Data from another account",
+                                "This file was exported by " + who + ", but you are signed in as "
+                                        + currentUser.getEmail() + ".\n\nImporting it will replace your current "
+                                        + "workspace with that account's data.",
+                                "Import anyway");
+                        if (!proceed) {
+                            setSaveStatus("Import cancelled");
+                            return;
+                        }
+                    }
+                    applyImportedData(imported.snapshot());
+                }));
+    }
+
+    private void applyImportedData(CrmDataSnapshot snapshot) {
+        loadingWorkspace = true;
+        applyUserData(snapshot);
+        loadingWorkspace = false;
+        setSaveStatus("Saving…");
+        CompletableFuture.runAsync(() -> workspaceService.save(snapshot)).whenComplete((ignored, failure) ->
+                Platform.runLater(() -> {
+                    if (failure == null) {
+                        setSaveStatus("Saved");
+                        dialogService.showInfo("Import complete", "Desktop-compatible data imported.");
+                    } else {
+                        setSaveStatus("Save failed");
+                        dialogService.showError("Data not saved", "The imported data could not be saved to disk.");
+                    }
+                }));
     }
 
     private void logout() {

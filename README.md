@@ -6,6 +6,33 @@ Workspace data is persisted locally and separated by account, with automatic rec
 
 The project is designed to support a future online service that can make workspace data available across devices and provide a controlled migration path from local files to cloud-backed storage. This cloud capability is part of the planned roadmap and is not yet enabled in the current local-first build.
 
+> **Repository notice:** This public repository is provided solely for source-code inspection and to showcase the author's work on GitHub. Public access does not grant permission to use, copy, modify, redistribute, or incorporate the code, in whole or in part, into a fork, personal or third-party project, product, or service. Commercial, professional, production, and business use of the application requires the purchase of an authorized commercial version or a separate written license from the author.
+
+## Contents
+
+- [Current Status](#current-status)
+- [Feature Overview](#feature-overview)
+  - [Accounts and Authentication](#accounts-and-authentication)
+  - [Home](#home)
+  - [Dashboard](#dashboard)
+  - [Contacts](#contacts)
+  - [Calendar](#calendar)
+  - [Tasks](#tasks)
+  - [Notes](#notes)
+  - [Agenda Sidebar](#agenda-sidebar)
+  - [Themes](#themes)
+  - [Profile Picture](#profile-picture)
+- [Keyboard and Mouse Reference](#keyboard-and-mouse-reference)
+- [Local Persistence and Recovery](#local-persistence-and-recovery)
+- [Requirements](#requirements)
+- [Running the Application](#running-the-application)
+- [Tests](#tests)
+- [Native Packaging](#native-packaging)
+- [Technology](#technology)
+- [Project Structure](#project-structure)
+- [Repository Purpose and Usage Restrictions](#repository-purpose-and-usage-restrictions)
+- [License](#license)
+
 ## Current Status
 
 The following sections are operational:
@@ -344,7 +371,7 @@ cd VoidReach-CRM-Final-No-FatJar
 mvn clean javafx:run
 ```
 
-On macOS or Linux, the helper script runs the same Maven goal:
+On macOS or Linux, the helper script runs `mvn javafx:run` without the `clean` phase, reusing the previous build output:
 
 ```bash
 cd VoidReach-CRM-Final-No-FatJar
@@ -406,19 +433,20 @@ Platform icons are located at:
 ## Technology
 
 - Java 26
-- JavaFX 26.0.1
+- JavaFX 26.0.1 (`javafx-controls`, `javafx-fxml`, `javafx-swing`)
 - RichTextFX 0.11.7
-- Ikonli FontAwesome 5
-- TwelveMonkeys ImageIO
+- Ikonli 12.3.1 (FontAwesome 5 pack)
+- TwelveMonkeys ImageIO 3.13.1
 - Maven
-- JUnit 5
+- JUnit Jupiter 5.11.4
 
 ## Project Structure
 
 ```text
-VoidReach-CRM-Calendar-Task/
+VoidReach-CRM-Calendar-Task-Note/
 ├── README.md
 ├── LICENSE
+├── sample/                                 # interface screenshots
 └── VoidReach-CRM-Final-No-FatJar/
     ├── pom.xml
     ├── run.sh
@@ -429,18 +457,33 @@ VoidReach-CRM-Calendar-Task/
         ├── main/
         │   ├── java/com/crm/
         │   │   ├── app/                    # launcher and JavaFX application lifecycle
-        │   │   ├── controller/             # account, overview, contacts, calendar, tasks, notes, navigation
+        │   │   ├── controller/             # login, main, navigation, splash, account, overview,
+        │   │   │                           #   contacts, calendar, tasks, notes
         │   │   ├── model/                  # contacts, tasks, notes, accounts, workspace snapshots
         │   │   ├── repository/             # atomic local storage, recovery, quarantine, backups
-        │   │   └── service/                # authentication, sessions, themes, avatars, Markdown code lexer
-        │   ├── packaging/                  # native platform icons
+        │   │   └── service/                # authentication, sessions, dialogs, themes, avatars,
+        │   │                               #   Markdown code lexer
+        │   ├── packaging/                  # native platform icons (VoidReach.icns, VoidReach.ico)
         │   └── resources/
-        │       ├── com/crm/view/           # FXML layouts
+        │       ├── com/crm/view/           # FXML layouts (LoginView, MainView, SplashScreen)
         │       ├── css/                    # Light, Dark, Blue-gray, and Gray Blue themes
         │       └── images/                 # application graphics
         └── test/java/com/crm/              # unit and integration tests
 ```
 
+## Repository Purpose and Usage Restrictions
+
+The repository is public only so visitors can inspect the source code and evaluate the author's software-development work through GitHub. It is **not open source** and grants no right to reuse the code or any portion of it.
+
+Without the author's prior written permission, you may not:
+
+- use a fork or other reproduction of the repository as the basis for another project;
+- copy, modify, adapt, or create derivative works from the code, in whole or in part;
+- use the code in your own or a third party's project, product, service, coursework submission, internal tool, or production system;
+- run, distribute, sublicense, sell, or otherwise exploit the application or its source code for commercial, professional, or business purposes.
+
+Commercial or professional use of VoidReach requires the purchase of an authorized commercial version or a separate written commercial license from the author.
+
 ## License
 
-See [LICENSE](LICENSE) for the terms of use.
+Copyright © 2026 Antonio Dicorato. All rights reserved. See [LICENSE](LICENSE) for the complete terms governing this repository.
