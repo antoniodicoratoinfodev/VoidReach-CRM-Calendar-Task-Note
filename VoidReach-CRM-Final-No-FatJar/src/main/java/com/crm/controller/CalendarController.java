@@ -20,6 +20,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.*;
@@ -56,6 +57,11 @@ public final class CalendarController {
     private static final double MIN_TIMELINE_WIDTH = 320.0;
     private static final double TIMELINE_TOP_SPACER_HEIGHT = 12.0;
     private static final double WEEK_HEADER_HEIGHT = 36.0;
+    private static final double TASK_RESIZE_HIT_HEIGHT = 10.0;
+    private static final double TASK_RESIZE_OVERLAP = 3.0;
+    private static final double TASK_TITLE_MAX_FONT_SIZE = 12.0;
+    private static final double TASK_TITLE_MIN_FONT_SIZE = 4.0;
+    private static final double TASK_TITLE_FULL_SIZE_HEIGHT = 24.0;
 
     private final VBox calendarView;
     private final AnchorPane timeLabelsContainer;
@@ -75,6 +81,7 @@ public final class CalendarController {
     private final Runnable dataChanged;
     private final Runnable showCalendar;
     private final Map<LocalDate, List<Task>> tasksByDate = new HashMap<>();
+    private final List<TaskResizeTarget> taskResizeTargets = new ArrayList<>();
     private NoteIntegration noteIntegration = NoteIntegration.EMPTY;
 
     private double dragAnchorY;
@@ -82,6 +89,10 @@ public final class CalendarController {
     private double dragInitialTop;
     private int dragTargetDayOffset;
     private boolean draggingTask;
+    private TaskResizeTarget activeResizeTarget;
+    private double resizeStartScreenY;
+    private int resizeStartDuration;
+    private boolean suppressClickAfterResize;
     private double zoom = DEFAULT_ZOOM;
     private PauseTransition resizeDebounce;
     private boolean calendarOpening;
@@ -132,6 +143,7 @@ public final class CalendarController {
                 resizeMiniCalendarCells());
         setupViewModeCombo();
         setupZoomControls();
+        setupTaskResizeGestures();
         updateZoomLabel();
         render();
         updateSidebar();
@@ -425,7 +437,7 @@ public final class CalendarController {
         return TIMELINE_TOP_SPACER_HEIGHT + (viewMode.equals("Week") ? WEEK_HEADER_HEIGHT : 0);
     }
 
-    private double clamp(double value, double min, double max) {
+    private static double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
 
@@ -458,6 +470,8 @@ public final class CalendarController {
     }
 
     private void render() {
+        taskResizeTargets.clear();
+        activeResizeTarget = null;
         timelineArea.getChildren().clear();
         timeLabelsContainer.getChildren().clear();
         double zoomedHourHeight = HOUR_HEIGHT * zoom;
@@ -616,7 +630,6 @@ public final class CalendarController {
         AnchorPane.setLeftAnchor(box, dayOffset * dayWidth + margin);
         AnchorPane.setTopAnchor(box, topInset + task.getStartMin() * minuteHeight);
         setTaskWidth(box, taskEntryWidth(dayWidth, margin));
-        setTaskHeight(box, task.getDuration() * minuteHeight);
         Rectangle taskClip = new Rectangle();
         taskClip.widthProperty().bind(box.widthProperty());
         taskClip.heightProperty().bind(box.heightProperty());
@@ -625,6 +638,27 @@ public final class CalendarController {
         box.setClip(taskClip);
         Label title = new Label(task.getTitle());
         title.getStyleClass().add("task-title");
+        title.setMinWidth(0);
+        title.setMaxWidth(Double.MAX_VALUE);
+        double timedHeight = taskEntryHeight(task.getDuration(), minuteHeight);
+        double titleFontSize = taskTitleFontSize(timedHeight);
+        boolean compact = titleFontSize < TASK_TITLE_MAX_FONT_SIZE;
+        title.setWrapText(!compact);
+        title.setTextOverrun(compact ? OverrunStyle.ELLIPSIS : OverrunStyle.CLIP);
+        if (compact) {
+            box.getStyleClass().add("task-entry-compact");
+            box.setStyle("-fx-padding: 0 4;");
+            title.setStyle(String.format(Locale.ROOT, "-fx-font-size: %.2fpx;", titleFontSize));
+        }
+        Tooltip fullTitle = new Tooltip(task.getTitle());
+        fullTitle.setWrapText(true);
+        fullTitle.setMaxWidth(420);
+        fullTitle.setStyle("-fx-font-size: 12px;");
+        fullTitle.setShowDelay(Duration.millis(250));
+        fullTitle.setShowDuration(Duration.INDEFINITE);
+        title.setTooltip(fullTitle);
+        Tooltip.install(box, fullTitle);
+        setTaskHeight(box, timedHeight);
         Label time = new Label();
         time.getStyleClass().add("task-time");
         updateTimeLabel(time, task.getStartMin(), task.getDuration());
@@ -653,21 +687,15 @@ public final class CalendarController {
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         Region resizer = new Region();
-        resizer.getStyleClass().add("task-resizer");
-        resizer.setPrefHeight(10);
-        resizer.setOnMousePressed(event -> { dragAnchorY = event.getScreenY(); event.consume(); });
-        resizer.setOnMouseDragged(event -> {
-            double delta = event.getScreenY() - dragAnchorY;
-            int proposed = task.getDuration() + (int) (delta / minuteHeight);
-            int maximum = Task.MINUTES_PER_DAY - task.getStartMin();
-            task.setDuration(Math.max(Task.MIN_DURATION_MINUTES, Math.min(maximum, proposed)));
-            setTaskHeight(box, task.getDuration() * minuteHeight);
-            updateTimeLabel(time, task.getStartMin(), task.getDuration());
-            dragAnchorY = event.getScreenY();
-            updateSidebar();
-            event.consume();
-        });
-        resizer.setOnMouseReleased(event -> { notifyDataChanged(); event.consume(); });
+        resizer.getStyleClass().add("task-resize-hit-area");
+        resizer.setPickOnBounds(true);
+        resizer.setMouseTransparent(false);
+        String idleResizeStyle = "-fx-background-color: transparent; -fx-cursor: s-resize;";
+        resizer.setStyle(idleResizeStyle);
+        resizer.setOnMouseEntered(event -> resizer.setStyle(
+                "-fx-background-color: rgba(248,250,252,0.38);"
+                        + " -fx-background-insets: 0 0 8 0; -fx-cursor: s-resize;"));
+        resizer.setOnMouseExited(event -> resizer.setStyle(idleResizeStyle));
         box.setOnMousePressed(event -> {
             if (event.getButton() != MouseButton.PRIMARY) return;
             dragAnchorY = event.getSceneY();
@@ -677,6 +705,7 @@ public final class CalendarController {
             draggingTask = true;
             box.getStyleClass().add("task-entry-dragging");
             box.toFront();
+            resizer.toFront();
         });
         box.setOnMouseDragged(event -> {
             if (!event.isPrimaryButtonDown()) return;
@@ -689,6 +718,7 @@ public final class CalendarController {
                 dragTargetDayOffset = Math.max(0, Math.min(6, (int) Math.floor((x + weekDayWidth / 2) / weekDayWidth)));
                 AnchorPane.setLeftAnchor(box, dragTargetDayOffset * weekDayWidth + margin);
             }
+            positionTaskResizeHandle(resizer, box);
             updateTimeLabel(time, task.getStartMin(), task.getDuration());
         });
         box.setOnMouseReleased(event -> {
@@ -729,10 +759,88 @@ public final class CalendarController {
             updateSidebar();
             notifyDataChanged();
         });
-        box.getChildren().addAll(title, time, description);
-        if (noteLinks != null) box.getChildren().add(noteLinks);
-        box.getChildren().addAll(spacer, resizer);
+        if (compact) {
+            StackPane compactContent = new StackPane(title);
+            compactContent.setMinHeight(0);
+            compactContent.setMaxHeight(Double.MAX_VALUE);
+            VBox.setVgrow(compactContent, Priority.ALWAYS);
+            StackPane.setAlignment(title, javafx.geometry.Pos.CENTER_LEFT);
+            Tooltip.install(compactContent, fullTitle);
+            box.getChildren().add(compactContent);
+        } else {
+            box.getChildren().add(title);
+            box.getChildren().addAll(time, description);
+            if (noteLinks != null) box.getChildren().add(noteLinks);
+            box.getChildren().add(spacer);
+        }
         timelineArea.getChildren().add(box);
+        setTaskWidth(resizer, taskEntryWidth(dayWidth, margin));
+        setTaskHeight(resizer, TASK_RESIZE_HIT_HEIGHT);
+        Tooltip.install(resizer, fullTitle);
+        timelineArea.getChildren().add(resizer);
+        positionTaskResizeHandle(resizer, box);
+        taskResizeTargets.add(new TaskResizeTarget(task, box, resizer, time, minuteHeight));
+    }
+
+    private void setupTaskResizeGestures() {
+        timelineArea.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+            if (event.getButton() != MouseButton.PRIMARY) return;
+            TaskResizeTarget target = findTaskResizeTarget(event.getX(), event.getY());
+            if (target == null) return;
+            activeResizeTarget = target;
+            suppressClickAfterResize = true;
+            resizeStartScreenY = event.getScreenY();
+            resizeStartDuration = target.task().getDuration();
+            target.taskBox().toFront();
+            target.resizeHandle().toFront();
+            event.consume();
+        });
+        timelineArea.addEventFilter(MouseEvent.MOUSE_DRAGGED, event -> {
+            if (activeResizeTarget == null || !event.isPrimaryButtonDown()) return;
+            Task task = activeResizeTarget.task();
+            int maximum = Task.MINUTES_PER_DAY - task.getStartMin();
+            task.setDuration(taskDurationAfterResize(resizeStartDuration,
+                    event.getScreenY() - resizeStartScreenY, activeResizeTarget.minuteHeight(), maximum));
+            setTaskHeight(activeResizeTarget.taskBox(),
+                    taskEntryHeight(task.getDuration(), activeResizeTarget.minuteHeight()));
+            positionTaskResizeHandle(activeResizeTarget.resizeHandle(), activeResizeTarget.taskBox());
+            updateTimeLabel(activeResizeTarget.timeLabel(), task.getStartMin(), task.getDuration());
+            updateSidebar();
+            event.consume();
+        });
+        timelineArea.addEventFilter(MouseEvent.MOUSE_RELEASED, event -> {
+            if (activeResizeTarget == null) return;
+            activeResizeTarget = null;
+            notifyDataChanged();
+            Platform.runLater(() -> {
+                render();
+                updateSidebar();
+                suppressClickAfterResize = false;
+            });
+            event.consume();
+        });
+        timelineArea.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            if (!suppressClickAfterResize) return;
+            suppressClickAfterResize = false;
+            event.consume();
+        });
+    }
+
+    private TaskResizeTarget findTaskResizeTarget(double x, double y) {
+        for (int index = taskResizeTargets.size() - 1; index >= 0; index--) {
+            TaskResizeTarget target = taskResizeTargets.get(index);
+            double left = AnchorPane.getLeftAnchor(target.taskBox());
+            double top = AnchorPane.getTopAnchor(target.taskBox());
+            if (taskResizeHit(x, y, left, top, target.taskBox().getPrefWidth(),
+                    target.taskBox().getPrefHeight())) return target;
+        }
+        return null;
+    }
+
+    private void positionTaskResizeHandle(Region resizeHandle, Region taskBox) {
+        AnchorPane.setLeftAnchor(resizeHandle, AnchorPane.getLeftAnchor(taskBox));
+        AnchorPane.setTopAnchor(resizeHandle, AnchorPane.getTopAnchor(taskBox)
+                + taskBox.getPrefHeight() - TASK_RESIZE_OVERLAP);
     }
 
     /**
@@ -750,15 +858,39 @@ public final class CalendarController {
         return Math.max(0, dayWidth - margin * 2);
     }
 
-    /**
-     * A task's visual bounds must match its time range exactly. VBox otherwise derives a larger
-     * minimum height from its labels, padding, and resize handle, especially at low zoom levels.
-     */
+    /** Keeps a task's colored bounds exactly aligned with its scheduled time range. */
     private void setTaskHeight(Region taskBox, double height) {
         double exactHeight = Math.max(0, height);
         taskBox.setMinHeight(exactHeight);
         taskBox.setPrefHeight(exactHeight);
         taskBox.setMaxHeight(exactHeight);
+    }
+
+    static double taskEntryHeight(int durationMinutes, double minuteHeight) {
+        return Math.max(0, durationMinutes * minuteHeight);
+    }
+
+    static double taskTitleFontSize(double taskHeight) {
+        double proportionalSize = TASK_TITLE_MAX_FONT_SIZE * Math.max(0, taskHeight)
+                / TASK_TITLE_FULL_SIZE_HEIGHT;
+        return clamp(proportionalSize, TASK_TITLE_MIN_FONT_SIZE, TASK_TITLE_MAX_FONT_SIZE);
+    }
+
+    static int taskDurationAfterResize(int initialDuration, double dragPixels,
+                                       double minuteHeight, int maximumDuration) {
+        if (minuteHeight <= 0) return Math.max(Task.MIN_DURATION_MINUTES,
+                Math.min(maximumDuration, initialDuration));
+        int minuteDelta = (int) Math.round(dragPixels / minuteHeight);
+        return Math.max(Task.MIN_DURATION_MINUTES,
+                Math.min(maximumDuration, initialDuration + minuteDelta));
+    }
+
+    static boolean taskResizeHit(double x, double y, double left, double top,
+                                 double width, double height) {
+        double end = top + height;
+        return x >= left && x <= left + width
+                && y >= end - TASK_RESIZE_OVERLAP
+                && y <= end + TASK_RESIZE_HIT_HEIGHT - TASK_RESIZE_OVERLAP;
     }
 
     private void updateTimeLabel(Label label, int start, int duration) {
@@ -909,6 +1041,9 @@ public final class CalendarController {
     }
 
     private record SidebarTask(LocalDate date, Task task) { }
+
+    private record TaskResizeTarget(Task task, VBox taskBox, Region resizeHandle,
+                                    Label timeLabel, double minuteHeight) { }
 
     private void selectDate(LocalDate date) {
         if (date.equals(datePicker.getValue())) refreshForSelectedDate(date);

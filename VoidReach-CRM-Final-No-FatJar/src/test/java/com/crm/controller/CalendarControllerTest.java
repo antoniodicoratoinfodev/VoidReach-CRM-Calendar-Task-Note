@@ -32,4 +32,35 @@ class CalendarControllerTest {
         assertEquals(130.0, CalendarController.taskEntryWidth(dayWidth, margin), 0.0001);
         assertEquals(7 * dayWidth - margin, right, 0.0001);
     }
+
+    @Test
+    void taskHeightAlwaysMatchesItsScheduledDuration() {
+        assertEquals(3.75, CalendarController.taskEntryHeight(5, 0.75), 0.0001);
+        assertEquals(60.0, CalendarController.taskEntryHeight(60, 1.0), 0.0001);
+    }
+
+    @Test
+    void taskTitleFontShrinksWithShortTasksAndNeverExceedsItsNormalSize() {
+        assertEquals(4.0, CalendarController.taskTitleFontSize(3.75), 0.0001);
+        assertEquals(7.5, CalendarController.taskTitleFontSize(15.0), 0.0001);
+        assertEquals(12.0, CalendarController.taskTitleFontSize(24.0), 0.0001);
+        assertEquals(12.0, CalendarController.taskTitleFontSize(180.0), 0.0001);
+    }
+
+    @Test
+    void resizingUsesTheWholeDragAndKeepsDurationWithinValidBounds() {
+        assertEquals(10, CalendarController.taskDurationAfterResize(5, 15, 3, 120));
+        assertEquals(5, CalendarController.taskDurationAfterResize(30, -100, 1, 120));
+        assertEquals(20, CalendarController.taskDurationAfterResize(15, 100, 1, 20));
+    }
+
+    @Test
+    void resizeHitAreaIncludesTheBottomEdgeAndSpaceImmediatelyBelowIt() {
+        org.junit.jupiter.api.Assertions.assertTrue(
+                CalendarController.taskResizeHit(50, 106, 10, 100, 100, 5));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                CalendarController.taskResizeHit(50, 115, 10, 100, 100, 5));
+        org.junit.jupiter.api.Assertions.assertFalse(
+                CalendarController.taskResizeHit(120, 106, 10, 100, 100, 5));
+    }
 }
