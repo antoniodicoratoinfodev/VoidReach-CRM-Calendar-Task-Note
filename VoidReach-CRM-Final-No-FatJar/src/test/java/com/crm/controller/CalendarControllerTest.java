@@ -35,6 +35,7 @@ class CalendarControllerTest {
 
     @Test
     void taskHeightAlwaysMatchesItsScheduledDuration() {
+        assertEquals(0.75, CalendarController.taskEntryHeight(1, 0.75), 0.0001);
         assertEquals(3.75, CalendarController.taskEntryHeight(5, 0.75), 0.0001);
         assertEquals(60.0, CalendarController.taskEntryHeight(60, 1.0), 0.0001);
     }
@@ -50,7 +51,7 @@ class CalendarControllerTest {
     @Test
     void resizingUsesTheWholeDragAndKeepsDurationWithinValidBounds() {
         assertEquals(10, CalendarController.taskDurationAfterResize(5, 15, 3, 120));
-        assertEquals(5, CalendarController.taskDurationAfterResize(30, -100, 1, 120));
+        assertEquals(1, CalendarController.taskDurationAfterResize(30, -100, 1, 120));
         assertEquals(20, CalendarController.taskDurationAfterResize(15, 100, 1, 20));
     }
 

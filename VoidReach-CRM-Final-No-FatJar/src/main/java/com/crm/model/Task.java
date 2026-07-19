@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public class Task {
     public static final int MINUTES_PER_DAY = 24 * 60;
-    public static final int MIN_DURATION_MINUTES = 5;
+    public static final int MIN_DURATION_MINUTES = 1;
 
     private String title;
     private String description;
@@ -60,7 +60,7 @@ public class Task {
             throw new IllegalArgumentException("The start time must be between 00:00 and 23:59.");
         }
         if (duration < MIN_DURATION_MINUTES) {
-            throw new IllegalArgumentException("A task must last at least 5 minutes.");
+            throw new IllegalArgumentException("A task must have a positive duration.");
         }
         if (duration > MINUTES_PER_DAY - startMin) {
             throw new IllegalArgumentException("A task cannot end after 24:00.");

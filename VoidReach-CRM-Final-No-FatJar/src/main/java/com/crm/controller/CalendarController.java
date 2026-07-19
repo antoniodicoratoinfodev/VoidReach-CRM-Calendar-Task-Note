@@ -1204,10 +1204,6 @@ public final class CalendarController {
                     dialogService.showError("Invalid Time", "The end time must be after the start time.");
                     return;
                 }
-                if (newEnd - newStart < Task.MIN_DURATION_MINUTES) {
-                    dialogService.showError("Invalid Time", "An activity must last at least 5 minutes.");
-                    return;
-                }
                 Task replacement = existingTask == null
                         ? new Task(title.getText(), description.getText(), newStart, newEnd - newStart, color.getValue())
                         : new Task(existingTask.getId(), title.getText(), description.getText(), newStart,

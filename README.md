@@ -199,7 +199,7 @@ Dashboard values update whenever contacts or tasks change.
 - Delete a selected task with the keyboard or from the task dialog.
 - Marked-complete tasks are visually distinguished.
 - Available colors: Blue, Red, Green, Yellow, Orange, and Purple.
-- Tasks must last at least five minutes and cannot end after 24:00.
+- Tasks can use any positive whole-minute duration and cannot end after 24:00.
 - Navigate to the previous or next day/week and return to today.
 - Zoom the timeline from 0.75x to 3x.
 - `Ctrl`/`Cmd` + mouse wheel zooms while the pointer is over the calendar; clicking the scrollbar first is not required.

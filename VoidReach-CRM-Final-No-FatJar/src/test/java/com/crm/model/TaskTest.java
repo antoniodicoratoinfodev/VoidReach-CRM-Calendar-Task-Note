@@ -7,20 +7,20 @@ import org.junit.jupiter.api.Test;
 
 class TaskTest {
     @Test void acceptsSchedulesInsideOneCalendarDay() {
-        Task firstMinutes = new Task("First", "", 0, 5, "Blue");
-        Task lastMinutes = new Task("Last", "", 1435, 5, "Blue");
+        Task firstMinute = new Task("First", "", 0, 1, "Blue");
+        Task lastMinute = new Task("Last", "", 1439, 1, "Blue");
         Task untilMidnight = new Task("Late", "", 1380, 60, "Blue");
 
-        assertEquals(5, firstMinutes.getDuration());
-        assertEquals(1435, lastMinutes.getStartMin());
+        assertEquals(1, firstMinute.getDuration());
+        assertEquals(1439, lastMinute.getStartMin());
         assertEquals(1440, untilMidnight.getStartMin() + untilMidnight.getDuration());
     }
 
     @Test void rejectsSchedulesOutsideOneCalendarDay() {
         assertThrows(IllegalArgumentException.class, () -> new Task("Bad", "", -1, 5, "Blue"));
         assertThrows(IllegalArgumentException.class, () -> new Task("Bad", "", 1440, 5, "Blue"));
-        assertThrows(IllegalArgumentException.class, () -> new Task("Bad", "", 60, 4, "Blue"));
-        assertThrows(IllegalArgumentException.class, () -> new Task("Bad", "", 1436, 5, "Blue"));
+        assertThrows(IllegalArgumentException.class, () -> new Task("Bad", "", 60, 0, "Blue"));
+        assertThrows(IllegalArgumentException.class, () -> new Task("Bad", "", 1439, 2, "Blue"));
         assertThrows(IllegalArgumentException.class, () -> new Task("Bad", "", 1200, 300, "Blue"));
     }
 
